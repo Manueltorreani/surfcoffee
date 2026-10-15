@@ -42,7 +42,16 @@ export default function AuthCard({ why = 'Tu cuenta' }) {
       options: { data: { name, phone }, emailRedirectTo: `${window.location.origin}/puntos` },
     });
     setBusy(false);
-    if (error) { toast(/database|already/i.test(error.message) ? 'Ya existe una cuenta con ese nombre, email o celular.' : 'No se pudo crear la cuenta. Probá de nuevo.'); return; }
+    if (error) {
+      const m = String(error.message || '');
+      console.error('signUp', error);
+      if (/already|database error saving/i.test(m)) toast('Ya existe una cuenta con ese nombre, email o celular.');
+      else if (/rate limit/i.test(m)) toast('Se mandaron demasiados mails seguidos. Esperá unos minutos y probá de nuevo.');
+      else if (/sending|smtp|not authorized/i.test(m)) toast('No pudimos mandarte el mail de confirmación. Avisanos por Instagram mientras lo solucionamos.');
+      else if (/password/i.test(m)) toast('Elegí una contraseña más segura (mínimo 6 caracteres).');
+      else toast('No se pudo crear la cuenta: ' + m);
+      return;
+    }
     if (!data.session) { setSent(email); return; }
     await loadMe();
     toast(chk.existing ? '¡Listo! Sumamos los puntos de tus compras en el local' : '¡Cuenta creada!');
