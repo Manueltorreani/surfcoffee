@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from './AppProvider';
+import { missingConfig } from '@/lib/supabase';
 
 export function Logo() {
   return (
@@ -48,6 +49,11 @@ export default function Shell({ children }) {
           )}
         </div>
       </header>
+      {missingConfig ? (
+        <div className="wrap" style={{ paddingTop: 16 }}>
+          <div className="banner">Falta configurar la conexión con Supabase. Cargá las variables de entorno en Vercel (ver README) y volvé a publicar.</div>
+        </div>
+      ) : null}
       <main className={inPanel ? '' : 'with-tabbar'}>{children}</main>
       {!inPanel ? (
         <nav className="tabbar" aria-label="Secciones">
