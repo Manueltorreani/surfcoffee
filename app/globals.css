@@ -278,3 +278,6 @@ input[type=email],input[type=password],input[type=time]{width:100%;border:1px so
 .rule{color:#fff}
 .rule p{color:#fff}
 .pcard{color:#fff}
+.google{width:100%;gap:10px;background:var(--surface)}
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}

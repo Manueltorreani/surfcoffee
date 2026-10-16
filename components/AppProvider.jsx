@@ -38,6 +38,16 @@ export default function AppProvider({ children }) {
   }, [sb]);
   useEffect(() => { loadPublic(); }, [loadPublic]);
 
+  // error al volver de Google (viene en la URL)
+  useEffect(() => {
+    const q = new URLSearchParams((window.location.hash || '').replace(/^#/, '') + '&' + window.location.search.replace(/^\?/, ''));
+    const err = q.get('error_description');
+    if (err) {
+      toast(/database error/i.test(err) ? 'Ya hay una cuenta con ese email. Entrá con tu email y contraseña.' : 'No pudimos entrar con Google. Probá de nuevo.');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [toast]);
+
   // sesión
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => { setSession(data.session); setAuthReady(true); });

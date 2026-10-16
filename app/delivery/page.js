@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from '@/components/AppProvider';
 import AuthCard from '@/components/AuthCard';
 import Chat from '@/components/Chat';
+import CompletePhone from '@/components/CompletePhone';
 import ZoneMap from '@/components/ZoneMap';
 import { checkAddr, deliveryState, errText, groupMenu, hoursText, money, zoneOf, zoneText } from '@/lib/utils';
 
@@ -76,6 +77,7 @@ export default function Delivery() {
       <section className="sec" style={{ borderTop: 0 }}>
         {head}
         <div className="stack" style={{ gap: 20 }}>
+          <CompletePhone />
           <div className="banner" style={{ fontSize: 15 }}><b>Pedinos por el chat</b> o agregá los productos abajo y envianos el pedido.</div>
           <Chat customerId={customer.id} role="cliente" title="Chat con Surf Coffee" subtitle="Te respondemos por acá"
             empty="Escribinos o mandá tu pedido. Podés adjuntar fotos o el comprobante de pago." />

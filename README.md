@@ -36,6 +36,17 @@ Los precios del pedido, la zona y el horario se validan en la base de datos, no 
 5. **Authentication → Providers → Email**: dejá activado “Confirm email” para que cada cuenta valide su correo.
 6. **Mails**: el envío de Supabase de fábrica tiene un límite bajo por hora. Para uso real configurá un SMTP propio en **Authentication → SMTP Settings** (por ejemplo Resend, con tu dominio). Los textos de los mails se cambian en **Authentication → Email Templates**.
 
+### Ingreso con Google (opcional, recomendado)
+1. [console.cloud.google.com](https://console.cloud.google.com) → crear proyecto "Surf Coffee".
+2. **APIs y servicios → Pantalla de consentimiento de OAuth**: tipo *Externo*, nombre "Surf Coffee", email de soporte. Publicar la app (*En producción*).
+3. **Credenciales → Crear credenciales → ID de cliente de OAuth** → *Aplicación web*.
+   - Orígenes autorizados: `https://TU-WEB`
+   - URI de redireccionamiento: `https://TU-PROYECTO.supabase.co/auth/v1/callback`
+4. Copiar el **ID de cliente** y el **secreto** en Supabase → **Authentication → Sign In / Providers → Google** → activar → guardar.
+5. Si tu base se creó antes de este cambio, correr `supabase/2026-10-google.sql` en el SQL Editor.
+
+Quien entra con Google no necesita confirmar el mail (Google ya lo verificó). La primera vez la web le pide el celular.
+
 ### 2. Tu usuario administrador
 1. **Authentication → Users → Add user**: tu email y contraseña, marcá “Auto confirm”.
 2. En **SQL Editor**:
