@@ -8,7 +8,7 @@ async function post(url, body) {
   return r.json().catch(() => ({}));
 }
 
-export default function AuthCard({ why = 'Tu cuenta' }) {
+export default function AuthCard({ why = 'Tu cuenta', staff = false }) {
   const { sb, settings, toast, loadMe } = useApp();
   const [mode, setMode] = useState('login');
   const [busy, setBusy] = useState(false);
@@ -132,7 +132,7 @@ export default function AuthCard({ why = 'Tu cuenta' }) {
 
   return (
     <div className="card stack authcard" style={{ maxWidth: 460 }}>
-      {tabs}
+      {staff ? null : tabs}
       <div className="eyebrow">{why}</div>
       <h2>Iniciá sesión</h2>
       <form className="stack" onSubmit={onLogin}>

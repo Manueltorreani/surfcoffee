@@ -22,7 +22,7 @@ const TABS = [
 
 export default function Shell({ children }) {
   const path = usePathname() || '/';
-  const { isAdmin, unreadClient, cart, session } = useApp();
+  const { unreadClient, cart, session, signOut } = useApp();
   const inPanel = path.startsWith('/panel');
   const cartN = Object.values(cart).reduce((a, b) => a + b, 0);
 
@@ -35,6 +35,7 @@ export default function Shell({ children }) {
             <>
               <span className="eyebrow" style={{ flex: 1 }}>Panel</span>
               <Link className="mode" href="/">Ver la web</Link>
+              {session ? <button className="mode" onClick={signOut}>Cerrar sesión</button> : null}
             </>
           ) : (
             <>
@@ -43,7 +44,6 @@ export default function Shell({ children }) {
                   <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}>{label}</Link>
                 ))}
               </nav>
-              {isAdmin ? <Link className="mode" href="/panel">Panel</Link> : null}
               {!session ? <Link className="mode" href="/cuenta">Ingresar</Link> : null}
             </>
           )}

@@ -31,8 +31,8 @@ export default function Panel() {
   }, [sb, isAdmin]);
 
   if (!authReady) return <div className="wrap"><div className="empty" style={{ marginTop: 24 }}>Cargando…</div></div>;
-  if (!session) return <div className="wrap"><section className="sec" style={{ borderTop: 0 }}><AuthCard why="Panel de Surf Coffee" /></section></div>;
-  if (!isAdmin) return <div className="wrap"><section className="sec" style={{ borderTop: 0 }}><div className="banner">Esta cuenta no es administradora. Agregala en la tabla <b>admins</b> de Supabase (ver README).</div></section></div>;
+  if (!session) return <div className="wrap"><section className="sec" style={{ borderTop: 0 }}><AuthCard why="Acceso del equipo" staff /></section></div>;
+  if (!isAdmin) return <div className="wrap"><section className="sec" style={{ borderTop: 0 }}><div className="banner">Esta sección es solo para el equipo de Surf Coffee.</div></section></div>;
 
   const View = { inbox: Inbox, caja: Caja, clientes: Clientes, menu: MenuAdmin, premios: Premios, ajustes: Ajustes }[tab] || Inbox;
   return (
