@@ -5,8 +5,8 @@ export default function manifest() {
     description: 'Menú, puntos y delivery de Surf Coffee',
     start_url: '/',
     display: 'standalone',
-    background_color: '#EAF1EF',
-    theme_color: '#17676B',
+    background_color: '#FFFFFF',
+    theme_color: '#006B96',
     lang: 'es-AR',
     icons: [
       { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },

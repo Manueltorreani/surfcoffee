@@ -3,15 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from './AppProvider';
 import { missingConfig } from '@/lib/supabase';
-
-export function Logo() {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-      <circle cx="13" cy="13" r="12" fill="var(--wax)" />
-      <path d="M4 16c3-3 5-3 7 0s4 3 7 0 4-2 5-1" fill="none" stroke="var(--ink)" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { Isotipo, Wordmark } from './Brand';
 
 const TABS = [
   ['/', 'Inicio', 'Inicio', <path key="i" d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" />],
@@ -30,7 +22,7 @@ export default function Shell({ children }) {
     <>
       <header className="top">
         <div className="wrap">
-          <Link className="brand" href="/"><Logo />SURF COFFEE</Link>
+          <Link className="brand" href="/" aria-label="Surf Coffee, inicio"><Isotipo className="brand-iso" /><Wordmark className="brand-wm" title="Surf Coffee" /></Link>
           {inPanel ? (
             <>
               <span className="eyebrow" style={{ flex: 1 }}>Panel</span>

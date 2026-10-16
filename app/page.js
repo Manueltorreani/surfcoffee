@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useApp } from '@/components/AppProvider';
 import { money } from '@/lib/utils';
+import { BrandPattern, Isotipo, Wordmark } from '@/components/Brand';
 
 function Wave() {
   return (
@@ -22,12 +23,18 @@ export default function Inicio() {
   return (
     <div className="wrap">
       <section className="hero">
-        <div className="coords">38°00′S · 57°33′O · MAR DEL PLATA</div>
-        <h1>SURF<br /><span>COFFEE</span></h1>
-        <p className="tag">{c.tagline || 'Café de especialidad a pasos del mar.'}</p>
-        <div className="cta">
-          <Link className="btn" href="/menu">Ver el menú</Link>
-          <Link className="btn wax" href="/delivery">Pedir delivery</Link>
+        <div className="hero-grid">
+          <Isotipo className="hero-iso" alt="" />
+          <div className="hero-copy">
+            <div className="coords">38°00′S · 57°33′O · MAR DEL PLATA</div>
+            <h1><Wordmark className="hero-wm" title="Surf Coffee" /></h1>
+            <div className="kicker">Cafetería de especialidad</div>
+            <p className="tag">{c.tagline || 'Café de especialidad a pasos del mar.'}</p>
+            <div className="cta">
+              <Link className="btn" href="/menu">Ver el menú</Link>
+              <Link className="btn wax" href="/delivery">Pedir delivery</Link>
+            </div>
+          </div>
         </div>
         <Wave />
       </section>
@@ -58,6 +65,7 @@ export default function Inicio() {
 
       <section className="sec">
         <div className="rule">
+          <BrandPattern />
           <div className="big">+1</div>
           <p><b>Sumá puntos en cada compra.</b> Por cada {money(ppp)} que gastás en el local te damos 1 punto. Juntalos y canjealos por café, pastelería y más. Solo decí tu nombre y apellido en caja.</p>
           <Link className="btn wax" href="/puntos">Ver mis puntos</Link>

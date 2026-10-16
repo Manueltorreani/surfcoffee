@@ -1,12 +1,7 @@
 import AppProvider from '@/components/AppProvider';
 import Shell from '@/components/Shell';
-import '@fontsource/bowlby-one/400.css';
-import '@fontsource/figtree/400.css';
-import '@fontsource/figtree/500.css';
-import '@fontsource/figtree/600.css';
-import '@fontsource/figtree/700.css';
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/600.css';
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/archivo/wdth-italic.css';
 import './globals.css';
 
 export const metadata = {
@@ -21,8 +16,8 @@ export const viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#EAF1EF' },
-    { media: '(prefers-color-scheme: dark)', color: '#08171C' },
+    { media: '(prefers-color-scheme: light)', color: '#F3F8FA' },
+    { media: '(prefers-color-scheme: dark)', color: '#00212D' },
   ],
 };
 
