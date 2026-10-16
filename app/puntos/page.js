@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '@/components/AppProvider';
 import AuthCard from '@/components/AuthCard';
-import CompletePhone from '@/components/CompletePhone';
 import { money, num, pwErr, when } from '@/lib/utils';
 
 function txLabel(t) {
@@ -57,7 +56,6 @@ export default function Puntos() {
   return (
     <div className="wrap">
       <section className="sec" style={{ borderTop: 0 }}>
-        <CompletePhone />
         <div className="two">
           <div className="stack">
             <div className="pcard">
