@@ -8,6 +8,8 @@ export default function Clientes() {
   const [list, setList] = useState([]);
   const [q, setQ] = useState('');
   const [pwFor, setPwFor] = useState(null);
+  const [delFor, setDelFor] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const load = () => sb.from('customers').select('*').order('points', { ascending: false }).limit(5000).then(({ data }) => setList(data || []));
@@ -37,6 +39,21 @@ export default function Clientes() {
     toast(`Contraseña de ${c.name} cambiada. Pasásela al cliente.`);
   }
 
+  async function remove(c) {
+    setBusy(true);
+    const r = await fetch('/api/admin/delete-customer', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ customerId: c.id }),
+    });
+    const j = await r.json().catch(() => ({}));
+    setBusy(false);
+    if (!r.ok) return toast(j.error || 'No se pudo eliminar');
+    setDelFor(null);
+    setList((l) => l.filter((x) => x.id !== c.id));
+    toast(`${c.name} fue eliminado`);
+  }
+
   return (
     <>
       <div className="ph"><div><div className="eyebrow">Fidelización</div><h2>Clientes</h2></div></div>
@@ -50,7 +67,7 @@ export default function Clientes() {
       {shown.length ? (
         <div className="tbl">
           <table>
-            <thead><tr><th>Cliente</th><th>Email</th><th>Celular</th><th className="n">Puntos</th><th className="n">Visitas</th><th className="n">Total gastado</th><th>Última visita</th><th>Web</th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Email</th><th>Celular</th><th className="n">Puntos</th><th className="n">Visitas</th><th className="n">Total gastado</th><th>Última visita</th><th>Web</th><th></th></tr></thead>
             <tbody>
               {shown.map((c) => (
                 <Fragment key={c.id}>
@@ -64,10 +81,24 @@ export default function Clientes() {
                         <button className="btn ghost sm" onClick={() => setPwFor(pwFor === c.id ? null : c.id)}>Cambiar contraseña</button>
                       </> : <span className="pill">Sin cuenta web</span>}
                     </td>
+                    <td><button className="btn danger sm" onClick={() => setDelFor(delFor === c.id ? null : c.id)}>Eliminar</button></td>
                   </tr>
+                  {delFor === c.id ? (
+                    <tr>
+                      <td colSpan={9} style={{ whiteSpace: 'normal' }}>
+                        <div className="row" style={{ alignItems: 'center' }}>
+                          <p style={{ flex: '1 1 260px' }}><b>¿Eliminar a {c.name}?</b> Se borran su cuenta web, sus {num(c.points)} puntos, los movimientos, el chat y los archivos. No se puede deshacer.</p>
+                          <div style={{ display: 'flex', gap: 8, flex: '0 0 auto' }}>
+                            <button className="btn danger" disabled={busy} onClick={() => remove(c)}>{busy ? 'Eliminando…' : 'Eliminar definitivamente'}</button>
+                            <button className="btn ghost" onClick={() => setDelFor(null)}>Cancelar</button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
                   {pwFor === c.id ? (
                     <tr>
-                      <td colSpan={8} style={{ whiteSpace: 'normal' }}>
+                      <td colSpan={9} style={{ whiteSpace: 'normal' }}>
                         <form className="row" style={{ alignItems: 'end' }} onSubmit={(e) => setPassword(e, c)}>
                           <label className="f">Nueva contraseña para {c.name}<input type="text" name="pw" required minLength={6} autoComplete="off" /></label>
                           <div style={{ display: 'flex', gap: 8, flex: '0 0 auto' }}>

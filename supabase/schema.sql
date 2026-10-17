@@ -188,10 +188,8 @@ begin
   end if;
   select * into c from customers where name_key = k;
   if found and c.auth_user_id is not null then
-    if not oauth then raise exception 'NAME_TAKEN'; end if;
-    -- con Google no frenamos el ingreso: se crea otra ficha con el mismo nombre
-    k := k || '-' || substr(replace(new.id::text, '-', ''), 1, 5);
-    found := false;
+    -- un nombre = una cuenta (también con Google)
+    raise exception 'NAME_TAKEN';
   end if;
   if found then
     update customers set auth_user_id = new.id, email = lower(new.email), phone = coalesce(ph, phone)

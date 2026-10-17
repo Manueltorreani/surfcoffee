@@ -43,7 +43,7 @@ export default function AppProvider({ children }) {
     const q = new URLSearchParams((window.location.hash || '').replace(/^#/, '') + '&' + window.location.search.replace(/^\?/, ''));
     const err = q.get('error_description');
     if (err) {
-      toast(/database error/i.test(err) ? 'Ya hay una cuenta con ese email. Entrá con tu email y contraseña.' : 'No pudimos entrar con Google. Probá de nuevo.');
+      toast(/database error/i.test(err) ? 'Ya hay una cuenta con ese nombre o email. Entrá con la misma cuenta que usaste la primera vez (Google o email).' : 'No pudimos entrar con Google. Probá de nuevo.');
       window.history.replaceState(null, '', window.location.pathname);
     }
   }, [toast]);
