@@ -78,6 +78,7 @@ export default function AuthCard({ why = 'Tu cuenta', staff = false }) {
   const or = (
     <>
       <GoogleButton onClick={onGoogle} busy={busy} />
+      <p className="muted" style={{ fontSize: 12, margin: 0 }}>Al continuar aceptás nuestra <a href="/privacidad">política de privacidad</a>.</p>
       <div className="or"><span>o con tu email</span></div>
     </>
   );
