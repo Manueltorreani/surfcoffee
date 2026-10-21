@@ -1,6 +1,9 @@
 import { adminClient, json, requireAdmin } from '@/lib/server';
 import { dbErr, newDeviceToken, tokenHash } from '@/lib/staff';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // El administrador autoriza el dispositivo desde el que está entrando (la tablet del café).
 // El token se guarda solo en ese dispositivo; en la base queda su hash.
 // POST /api/admin/devices   Authorization: Bearer <token>   body { name }

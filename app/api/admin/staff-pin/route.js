@@ -1,6 +1,9 @@
 import { adminClient, json, requireAdmin } from '@/lib/server';
 import { dbErr, hashPin, pinOk } from '@/lib/staff';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // El administrador asigna o cambia el PIN de una persona del equipo.
 // POST /api/admin/staff-pin   Authorization: Bearer <token>   body { staff_id, pin }
 export async function POST(req) {

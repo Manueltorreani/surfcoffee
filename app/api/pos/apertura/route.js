@@ -1,6 +1,9 @@
 import { adminClient, json, posAuthorized } from '@/lib/server';
 import { registerArrival } from '@/lib/staff';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // Software de ventas → al abrir caja registra la llegada y devuelve el mensaje
 // para mostrar en pantalla (antes de hora / justo / tarde).
 // POST /api/pos/apertura   header x-api-key   body { staff_id }

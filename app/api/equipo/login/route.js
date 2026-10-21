@@ -1,6 +1,9 @@
 import { json } from '@/lib/server';
 import { checkPin, requireDevice, staffToken } from '@/lib/staff';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // Tablet del café → ingreso con nombre + PIN.
 // POST /api/equipo/login   header x-device   body { staff_id, pin }
 export async function POST(req) {

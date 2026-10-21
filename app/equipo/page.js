@@ -52,19 +52,30 @@ export default function Equipo() {
   }, [device, shots]);
 
   // dispositivo autorizado y lista de personas
+  const [listErr, setListErr] = useState('');
   const loadPeople = useCallback(async (dev) => {
-    const r = await fetch('/api/equipo/staff', { headers: { 'x-device': dev }, cache: 'no-store' });
-    if (r.status === 401) { setPhase('nodevice'); return; }
-    const d = await r.json().catch(() => ({}));
-    setDeviceName(d.device || '');
-    setPeople(d.staff || []);
-    setPhase('pick');
+    const r = await fetch(`/api/equipo/staff?t=${Date.now()}`, { headers: { 'x-device': dev }, cache: 'no-store' }).catch(() => null);
+    if (r?.status === 401) { setPhase('nodevice'); return; }
+    const d = r ? await r.json().catch(() => ({})) : {};
+    setListErr(!r ? 'Sin conexión. Revisá el wifi.' : !r.ok ? d.error || 'No se pudo cargar el equipo' : '');
+    if (r?.ok) { setDeviceName(d.device || ''); setPeople(d.staff || []); }
+    setPhase((p) => (p === 'loading' || p === 'nodevice' ? 'pick' : p));
   }, []);
   useEffect(() => {
     const dev = readDevice();
     setDevice(dev);
     if (!dev) setPhase('nodevice'); else loadPeople(dev);
   }, [loadPeople]);
+
+  useEffect(() => {
+    if (phase !== 'pick' || !device) return;
+    loadPeople(device);
+    const again = () => document.visibilityState === 'visible' && loadPeople(device);
+    const iv = setInterval(again, 60000);
+    window.addEventListener('focus', again);
+    document.addEventListener('visibilitychange', again);
+    return () => { clearInterval(iv); window.removeEventListener('focus', again); document.removeEventListener('visibilitychange', again); };
+  }, [phase, device, loadPeople]);
 
   // cierre automático de sesión por inactividad (la tablet es compartida)
   useEffect(() => {
@@ -159,7 +170,11 @@ export default function Equipo() {
 
   if (phase === 'pick') return (
     <div className="eq">
-      <div className="eq-head"><div><div className="eyebrow">Equipo{deviceName ? ` · ${deviceName}` : ''}</div><h1 className="eq-h">¿Quién sos?</h1></div></div>
+      <div className="eq-head">
+        <div><div className="eyebrow">Equipo{deviceName ? ` · ${deviceName}` : ''}</div><h1 className="eq-h">¿Quién sos?</h1></div>
+        <button type="button" className="btn ghost sm" onClick={() => loadPeople(device)}>Actualizar</button>
+      </div>
+      {listErr ? <p className="eq-err" role="alert">{listErr}</p> : null}
       {people.length ? (
         <div className="who">
           {people.map((p) => (

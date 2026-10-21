@@ -1,6 +1,9 @@
 import { json, posAuthorized } from '@/lib/server';
 import { checkPin } from '@/lib/staff';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // Software de ventas → verifica nombre + PIN (el mismo PIN que la tablet).
 // POST /api/pos/staff-login   header x-api-key   body { staff_id, pin }
 export async function POST(req) {

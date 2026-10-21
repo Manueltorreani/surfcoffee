@@ -2,6 +2,9 @@ import crypto from 'node:crypto';
 import { adminClient, json } from '@/lib/server';
 import { arNow, requireStaff } from '@/lib/staff';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 const MAX = 5 * 1024 * 1024;
 const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 

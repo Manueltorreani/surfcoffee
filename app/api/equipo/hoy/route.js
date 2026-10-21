@@ -2,6 +2,7 @@ import { adminClient, json } from '@/lib/server';
 import { addDays, arNow, hhmm, requireStaff } from '@/lib/staff';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 // Tablet → todo lo que necesita la pantalla de la persona que entró.
 // GET /api/equipo/hoy   headers x-device, x-staff

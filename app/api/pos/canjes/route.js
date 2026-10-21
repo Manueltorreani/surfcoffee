@@ -1,5 +1,8 @@
 import { adminClient, json, posAuthorized } from '@/lib/server';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // Software de ventas → canjear un premio.
 // POST /api/pos/canjes   header x-api-key: <POS_API_KEY>
 // body: { "cliente_id": "uuid", "premio_id": "uuid" }

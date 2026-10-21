@@ -1,6 +1,7 @@
 import { adminClient, json, posAuthorized } from '@/lib/server';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 // Software de ventas → lista del equipo (para el login de cada cajero).
 // GET /api/pos/equipo   header x-api-key

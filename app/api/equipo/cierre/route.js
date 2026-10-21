@@ -1,6 +1,9 @@
 import { adminClient, json } from '@/lib/server';
 import { addDays, arNow, closingMessage, requireStaff, todayShift } from '@/lib/staff';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // Tablet → guarda el cierre de turno: una foto por ítem + conteo de stock.
 // POST /api/equipo/cierre   headers x-device, x-staff
 // body { fotos: [{ check_id, path, taken_at }], stock: [{ item_id, qty }], nota }
