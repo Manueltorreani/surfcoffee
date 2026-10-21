@@ -27,6 +27,8 @@ Web de Surf Coffee (Mar del Plata): quiénes somos, menú, sistema de puntos, de
 **Equipo** (`/equipo`, solo en la tablet autorizada del café)
 - Cada persona elige su nombre y entra con su PIN de 4 números (Manu y Mate también, como uno más del equipo).
 - Ve su turno de hoy y sus próximos turnos.
+- Orden del turno: primero se marca la llegada y al final el cierre. No se puede marcar la llegada de un turno ya cerrado, ni cerrar sin haber marcado la llegada (un cierre por turno).
+- Solo desde el café: la llegada y el cierre se rechazan si la tablet está fuera del radio del café o fuera del wifi del local (cuando están configurados).
 - Marcar llegada: saca una foto del local y el sistema registra la hora y la compara con el turno (antes / justo / tarde). Una llegada por turno, así quien hace mañana y tarde marca las dos.
 - Cierre de turno: una foto con la cámara en vivo de cada cosa (cafetera, cocina, fiambrera, baños, pisos…), estampada con nombre, fecha y hora; después el conteo de stock. Al terminar aparece un mensaje que los motiva a mejorar.
 - La sesión se cierra sola a los 5 minutos sin uso.
@@ -80,11 +82,12 @@ Copiá `.env.example` a `.env.local` y completá con los datos de **Supabase →
 | `POS_API_KEY` | clave para tu software de ventas (`openssl rand -hex 32`) |
 
 ### Sistema del equipo (tablet)
-1. Si tu base se creó antes de este cambio, corré en el SQL Editor `supabase/2026-10-equipo.sql` y después `supabase/2026-10-turnos.sql`.
+1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql` y `supabase/2026-10-ubicacion.sql`.
 2. En el panel → **Equipo**: agregá a cada persona con su PIN (empezando por vos y Mate como dueños).
 3. Desde la **tablet del café**, entrá a `/panel` con tu usuario → **Equipo → Autorizar este dispositivo**. Después cerrá sesión.
 4. En la tablet abrí `/equipo` y agregala a la pantalla de inicio. Solo funciona en dispositivos autorizados.
-5. En **Turnos** cargá los horarios de la semana (o copiá la anterior) y en **Stock** los insumos con su mínimo.
+5. **Estando en el café**, en Panel → Equipo → **Ubicación del café**: tocá *Usar mi ubicación actual* y *Guardar esta conexión como wifi del café*. Desde ahí, la llegada y el cierre solo se pueden marcar en el local (por GPS o por el wifi). No autorices como dispositivo compus o celulares personales.
+6. En **Turnos** cargá los horarios de la semana (o copiá la anterior) y en **Stock** los insumos con su mínimo.
 
 ### 4. Probar en tu compu
 ```bash

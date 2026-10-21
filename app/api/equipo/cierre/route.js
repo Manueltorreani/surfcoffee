@@ -1,5 +1,5 @@
 import { adminClient, json } from '@/lib/server';
-import { addDays, arNow, closingMessage, requireStaff, todayShift } from '@/lib/staff';
+import { addDays, arNow, checkPlace, closingMessage, hhmm, parseGeo, requireStaff, todayShift } from '@/lib/staff';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -13,6 +13,22 @@ export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   const sb = adminClient();
   const day = arNow().date;
+
+  // solo desde el café
+  const place = await checkPlace(req, parseGeo(body.geo));
+  if (!place.ok) return json({ error: place.error }, 403);
+
+  // orden del turno: primero la llegada, un solo cierre por turno
+  const shift = await todayShift(me.staff.id, 'end');
+  if (shift) {
+    const [cl, at] = await Promise.all([
+      sb.from('staff_closings').select('id', { count: 'exact', head: true }).eq('shift_id', shift.id),
+      sb.from('staff_attendance').select('id', { count: 'exact', head: true }).eq('shift_id', shift.id),
+    ]);
+    const turno = `${hhmm(shift.start_time)} a ${hhmm(shift.end_time)}`;
+    if (cl.count) return json({ error: `El turno de ${turno} ya está cerrado.` }, 409);
+    if (!at.count) return json({ error: `Primero marcá la llegada del turno de ${turno}.` }, 409);
+  }
   const [checks, items] = await Promise.all([
     sb.from('closing_checks').select('id, name').eq('active', true).order('sort'),
     sb.from('stock_items').select('id, name, unit, min_qty').eq('active', true).order('sort'),
@@ -43,10 +59,9 @@ export async function POST(req) {
   }
   const missing = stock.filter((s) => s.qty < s.min).map((s) => ({ ...s, falta: Math.round((s.min - s.qty) * 100) / 100 }));
 
-  const shift = await todayShift(me.staff.id, 'end');
   const { error } = await sb.from('staff_closings').insert({
     staff_id: me.staff.id, staff_name: me.staff.name, device_id: me.device.id, shift_id: shift?.id || null,
-    day, photos, stock, missing, note: String(body.nota || '').slice(0, 500),
+    day, photos, stock, missing, note: String(body.nota || '').slice(0, 500), ip: place.ip || null, geo: place.geo || null,
   });
   if (error) return json({ error: 'No se pudo guardar el cierre' }, 500);
   const msg = await closingMessage(me.staff);

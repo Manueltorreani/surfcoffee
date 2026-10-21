@@ -13,6 +13,18 @@ const dayLabel = (iso, hoy) => {
 const hora = (ts) => new Date(ts).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' });
 const LLEGADA = { antes: 'Llegaste antes de hora', justo: 'Llegaste a tiempo', tarde: 'Llegaste tarde', sin_turno: 'Apertura registrada' };
 
+// ubicación de la tablet (para comprobar que está en el café). null si no se pudo.
+function getGeo() {
+  return new Promise((res) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(
+      (p) => res({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }),
+      () => res(null),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    );
+  });
+}
+
 function readDevice() {
   try { return localStorage.getItem(DEVICE_KEY) || ''; } catch { return ''; }
 }
@@ -140,6 +152,8 @@ export default function Equipo() {
     setBusy(true); setErr('');
     const fd = new FormData();
     fd.append('file', blob, 'llegada.jpg');
+    const geo = await getGeo();
+    if (geo) fd.append('geo', JSON.stringify(geo));
     const r = await call('/api/equipo/llegada', { method: 'POST', form: fd });
     setBusy(false);
     if (!r.ok) { setErr(r.status === 401 ? 'Se cerró tu sesión. Volvé a ingresar.' : r.data.error || 'No se pudo marcar la llegada'); if (r.status === 401) reset(); return; }
@@ -150,9 +164,11 @@ export default function Equipo() {
 
   async function sendClosing() {
     setBusy(true); setErr('');
+    const geo = await getGeo();
     const r = await call('/api/equipo/cierre', {
       method: 'POST',
       body: {
+        geo,
         fotos: Object.entries(shots).map(([check_id, s]) => ({ check_id, path: s.path, taken_at: s.taken_at })),
         stock: Object.entries(counts).map(([item_id, qty]) => ({ item_id, qty })),
         nota,
@@ -232,7 +248,11 @@ export default function Equipo() {
   const arrShift = turnoHoy.length ? turnoHoy.reduce((b, t) => (Math.abs(toMin(t.desde) - me.ahora) < Math.abs(toMin(b.desde) - me.ahora) ? t : b)) : null;
   const llegadaDe = (id) => (me?.llegadas || []).find((a) => (a.shift_id || null) === (id || null));
   const cierreDe = (id) => (me?.cierres || []).filter((c) => c.shift_id === id).pop();
-  const needArrival = me && !llegadaDe(arrShift?.id);
+  const nowMin = me?.ahora ?? 0;
+  const started = turnoHoy.filter((t) => toMin(t.desde) <= nowMin);
+  const closeShift = started.length ? started[started.length - 1] : turnoHoy[0] || null;
+  const needArrival = me && !llegadaDe(arrShift?.id) && !(arrShift && cierreDe(arrShift.id));
+  const closeBlock = !closeShift ? '' : cierreDe(closeShift.id) ? `Turno de ${closeShift.desde} cerrado` : !llegadaDe(closeShift.id) ? 'Primero marcá la llegada' : '';
 
   if (phase === 'home') return (
     <div className="eq">
@@ -242,6 +262,7 @@ export default function Equipo() {
       </div>
       <div className="card stack">
         <span className="eyebrow">Hoy</span>
+        <span className="muted" style={{ fontSize: 13 }}>Primero marcás la llegada y al final del turno hacés el cierre. La tablet tiene que estar en el café (con la ubicación activada).</span>
         {turnoHoy.length ? turnoHoy.map((t) => {
           const a = llegadaDe(t.id), c = cierreDe(t.id);
           return (
@@ -262,7 +283,9 @@ export default function Equipo() {
           {busy ? 'Registrando…' : `Marcar llegada${arrShift ? ` · turno ${arrShift.desde}` : ''}`}
         </button>
       ) : null}
-      <button type="button" className={`btn eq-big ${needArrival ? 'ghost' : ''}`} onClick={() => { setErr(''); setPhase('fotos'); }}>Hacer cierre de turno</button>
+      <button type="button" className={`btn eq-big ${needArrival ? 'ghost' : ''}`} disabled={!!closeBlock} onClick={() => { setErr(''); setPhase('fotos'); }}>
+        {closeBlock || `Hacer cierre de turno${closeShift ? ` · ${closeShift.desde} – ${closeShift.hasta}` : ''}`}
+      </button>
       <div className="stack">
         <span className="eyebrow">Mis próximos turnos</span>
         {proximos.length ? (

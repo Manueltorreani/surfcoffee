@@ -1,5 +1,5 @@
 import { adminClient, json, posAuthorized } from '@/lib/server';
-import { registerArrival } from '@/lib/staff';
+import { registerArrival, RuleError } from '@/lib/staff';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -15,7 +15,8 @@ export async function POST(req) {
   if (!staff || !staff.active) return json({ error: 'Usuario no encontrado' }, 404);
   try {
     return json(await registerArrival(staff, 'pos'));
-  } catch {
+  } catch (e) {
+    if (e instanceof RuleError) return json({ error: e.message }, 409);
     return json({ error: 'No se pudo registrar la apertura' }, 500);
   }
 }

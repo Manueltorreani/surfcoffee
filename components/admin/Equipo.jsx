@@ -122,6 +122,33 @@ export default function Equipo() {
   }
   async function delCheck(c) { await sb.from('closing_checks').delete().eq('id', c.id); setConfirm(null); load(); }
 
+  // ---------- ubicación del café ----------
+  const [radio, setRadio] = useState('');
+  const [locBusy, setLocBusy] = useState(false);
+  useEffect(() => { if (settings) setRadio(String(settings.cafe_radio_m ?? 150)); }, [settings]);
+  const ips = Array.isArray(settings?.cafe_ips) ? settings.cafe_ips : [];
+  const hasLoc = settings?.cafe_lat != null && settings?.cafe_lng != null;
+  async function saveSettings(patch, ok) {
+    const { data, error } = await sb.from('settings').update(patch).eq('id', 1).select('*').single();
+    if (error) return toast(/cafe_/.test(error.message) ? 'Falta correr supabase/2026-10-ubicacion.sql en Supabase' : 'No se pudo guardar');
+    setSettings(data); toast(ok);
+  }
+  function useHere() {
+    if (!navigator.geolocation) return toast('Este navegador no da la ubicación');
+    setLocBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (p) => { setLocBusy(false); saveSettings({ cafe_lat: p.coords.latitude, cafe_lng: p.coords.longitude }, `Ubicación del café guardada (precisión ${Math.round(p.coords.accuracy)} m)`); },
+      () => { setLocBusy(false); toast('No se pudo obtener la ubicación. Revisá el permiso del navegador.'); },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  }
+  async function addMyIp() {
+    const r = await fetch('/api/admin/my-ip', { headers: { authorization: `Bearer ${session?.access_token || ''}` }, cache: 'no-store' }).then((x) => x.json()).catch(() => ({}));
+    if (!r.ip) return toast('No se pudo leer la conexión');
+    if (ips.includes(r.ip)) return toast('Esta conexión ya está guardada');
+    saveSettings({ cafe_ips: [...ips, r.ip] }, `Conexión ${r.ip} guardada como wifi del café`);
+  }
+
   const thisAuthorized = myHash && devices.some((d) => d.token_hash === myHash && !d.revoked);
 
   return (
@@ -202,6 +229,34 @@ export default function Equipo() {
             <button className="btn" style={{ flex: '0 0 auto' }}>Guardar</button>
           </div>
         </form>
+      </div>
+
+      <div className="card stack" style={{ marginBottom: 24 }}>
+        <b>Ubicación del café</b>
+        <p className="muted" style={{ fontSize: 14 }}>La llegada y el cierre solo se pueden marcar si la tablet está en el café: dentro del radio de la ubicación guardada <b>o</b> conectada al wifi del local. Hacé estos pasos <b>estando en el café</b>.</p>
+        {!hasLoc && !ips.length ? <div className="banner" style={{ borderColor: 'var(--bad)' }}>Todavía no está configurado: por ahora se puede marcar desde cualquier lugar.</div> : null}
+        <div className="two" style={{ gap: 16 }}>
+          <div className="stack" style={{ gap: 8 }}>
+            <span><b>1. Ubicación (GPS)</b> · {hasLoc ? <span className="pill entregado">Guardada</span> : <span className="pill">Sin guardar</span>}</span>
+            {hasLoc ? <a className="muted" style={{ fontSize: 13 }} href={`https://maps.google.com/?q=${settings.cafe_lat},${settings.cafe_lng}`} target="_blank" rel="noopener noreferrer">Ver en el mapa</a> : null}
+            <div className="row">
+              <label className="f">Radio permitido (metros)<input type="text" inputMode="numeric" value={radio} onChange={(e) => setRadio(e.target.value.replace(/\D/g, '').slice(0, 4))} /></label>
+              <button type="button" className="btn ghost" style={{ flex: '0 0 auto' }} onClick={() => saveSettings({ cafe_radio_m: Math.max(30, Number(radio) || 150) }, 'Radio guardado')}>Guardar radio</button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button type="button" className="btn" onClick={useHere} disabled={locBusy}>{locBusy ? 'Buscando…' : 'Usar mi ubicación actual'}</button>
+              {hasLoc ? <button type="button" className="btn ghost" onClick={() => saveSettings({ cafe_lat: null, cafe_lng: null }, 'Ubicación borrada')}>Borrar</button> : null}
+            </div>
+          </div>
+          <div className="stack" style={{ gap: 8 }}>
+            <span><b>2. Wifi del café</b> · {ips.length ? <span className="pill entregado">{ips.length} guardada{ips.length > 1 ? 's' : ''}</span> : <span className="pill">Sin guardar</span>}</span>
+            <span className="muted" style={{ fontSize: 13 }}>Conectado al wifi del café, tocá el botón. Si el proveedor de internet cambia la conexión, volvé a guardarla.</span>
+            {ips.map((ip) => (
+              <div key={ip} className="found" style={{ padding: '8px 12px' }}><span className="mono">{ip}</span><button type="button" className="btn ghost sm" onClick={() => saveSettings({ cafe_ips: ips.filter((x) => x !== ip) }, 'Conexión borrada')}>Quitar</button></div>
+            ))}
+            <div><button type="button" className="btn" onClick={addMyIp}>Guardar esta conexión como wifi del café</button></div>
+          </div>
+        </div>
       </div>
 
       <div className="ph"><div><div className="eyebrow">Cierre de turno</div><h2 style={{ fontSize: 22 }}>Fotos obligatorias</h2></div></div>
