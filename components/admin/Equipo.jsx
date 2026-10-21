@@ -23,6 +23,7 @@ export default function Equipo() {
   const [chk, setChk] = useState({ name: '', hint: '' });
   const [tol, setTol] = useState('');
   const [confirm, setConfirm] = useState(null);
+  const [missingDb, setMissingDb] = useState(false);
 
   const load = useCallback(async () => {
     const [s, d, c] = await Promise.all([
@@ -30,6 +31,7 @@ export default function Equipo() {
       sb.from('staff_devices').select('id, name, token_hash, revoked, last_seen, created_at').order('created_at', { ascending: false }),
       sb.from('closing_checks').select('*').order('sort').order('name'),
     ]);
+    setMissingDb([s, d, c].some((r) => r.error && (r.error.code === '42P01' || r.error.code === 'PGRST205' || /does not exist|schema cache/i.test(r.error.message || ''))));
     setStaff(s.data || []); setDevices(d.data || []); setChecks(c.data || []);
   }, [sb]);
   useEffect(() => { load(); }, [load]);
@@ -58,7 +60,7 @@ export default function Equipo() {
     if (!name) return toast('Escribí el nombre');
     if (form.pin && form.pin.length !== 4) return toast('El PIN tiene que tener 4 números');
     const { data, error } = await sb.from('staff').insert({ name, role: form.role }).select('id').single();
-    if (error) return toast('No se pudo agregar');
+    if (error) return toast(`No se pudo agregar: ${error.message}`);
     if (form.pin) await savePin(data.id, form.pin);
     setForm({ name: '', role: 'empleado', pin: '' });
     toast(`${name} agregado al equipo`);
@@ -126,6 +128,7 @@ export default function Equipo() {
     <>
       <div className="ph"><div><div className="eyebrow">Personal</div><h2>Equipo</h2></div><span className="muted">Dueños incluidos: todos hacen el cierre igual</span></div>
 
+      {missingDb ? <div className="banner" style={{ marginBottom: 16, borderColor: 'var(--bad)' }}><b>Falta crear las tablas del equipo.</b> En Supabase → SQL Editor, pegá todo el archivo <code>supabase/2026-10-equipo.sql</code> y tocá Run. Después recargá esta página.</div> : null}
       <form className="card stack" style={{ marginBottom: 16 }} onSubmit={addPerson}>
         <b>Agregar persona</b>
         <div className="row">

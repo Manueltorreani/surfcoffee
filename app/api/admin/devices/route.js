@@ -1,5 +1,5 @@
 import { adminClient, json, requireAdmin } from '@/lib/server';
-import { newDeviceToken, tokenHash } from '@/lib/staff';
+import { dbErr, newDeviceToken, tokenHash } from '@/lib/staff';
 
 // El administrador autoriza el dispositivo desde el que está entrando (la tablet del café).
 // El token se guarda solo en ese dispositivo; en la base queda su hash.
@@ -11,6 +11,6 @@ export async function POST(req) {
   const nm = String(name || '').trim().slice(0, 60) || 'Tablet del café';
   const token = newDeviceToken();
   const { data, error } = await adminClient().from('staff_devices').insert({ name: nm, token_hash: tokenHash(token) }).select('id, name').single();
-  if (error) return json({ error: 'No se pudo autorizar' }, 500);
+  if (error) return json({ error: dbErr(error, 'No se pudo autorizar') }, 500);
   return json({ token, device: data });
 }
