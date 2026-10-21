@@ -21,15 +21,16 @@ Web de Surf Coffee (Mar del Plata): quiénes somos, menú, sistema de puntos, de
 - Menú, Premios y Ajustes (textos, horarios, zona de entrega, puntos).
 - Cierres: fotos y conteo de stock de cada cierre de turno, con botón para mandar los faltantes por WhatsApp.
 - Stock: insumos que se cuentan al cierre, con su mínimo; lista de lo que hay que comprar.
-- Turnos: horarios de la semana por persona y a qué hora llegó cada uno.
+- Turnos: dos turnos fijos (Mañana 08:30–13:00 de lunes a sábado, Tarde 15:30–20:00 todos los días); se asignan tocando el turno de cada persona y día. Muestra la hora de llegada y la foto. Los horarios se cambian desde la misma pestaña (por ejemplo en verano).
 - Equipo: personas (empleados y dueños), PIN de cada uno, dispositivos autorizados, tolerancia de llegada y fotos obligatorias del cierre.
 
 **Equipo** (`/equipo`, solo en la tablet autorizada del café)
 - Cada persona elige su nombre y entra con su PIN de 4 números (Manu y Mate también, como uno más del equipo).
 - Ve su turno de hoy y sus próximos turnos.
+- Marcar llegada: saca una foto del local y el sistema registra la hora y la compara con el turno (antes / justo / tarde). Una llegada por turno, así quien hace mañana y tarde marca las dos.
 - Cierre de turno: una foto con la cámara en vivo de cada cosa (cafetera, cocina, fiambrera, baños, pisos…), estampada con nombre, fecha y hora; después el conteo de stock. Al terminar aparece un mensaje que los motiva a mejorar.
 - La sesión se cierra sola a los 5 minutos sin uso.
-- La apertura de caja y el arqueo se hacen en el software de ventas (ver API abajo).
+- La apertura de caja y el arqueo se hacen en el software de ventas. Si el software de ventas llama a `/api/pos/apertura`, también registra la llegada (ver API abajo).
 
 Los precios del pedido, la zona y el horario se validan en la base de datos, no solo en el navegador.
 
@@ -79,7 +80,7 @@ Copiá `.env.example` a `.env.local` y completá con los datos de **Supabase →
 | `POS_API_KEY` | clave para tu software de ventas (`openssl rand -hex 32`) |
 
 ### Sistema del equipo (tablet)
-1. Si tu base se creó antes de este cambio, corré `supabase/2026-10-equipo.sql` en el SQL Editor.
+1. Si tu base se creó antes de este cambio, corré en el SQL Editor `supabase/2026-10-equipo.sql` y después `supabase/2026-10-turnos.sql`.
 2. En el panel → **Equipo**: agregá a cada persona con su PIN (empezando por vos y Mate como dueños).
 3. Desde la **tablet del café**, entrá a `/panel` con tu usuario → **Equipo → Autorizar este dispositivo**. Después cerrá sesión.
 4. En la tablet abrí `/equipo` y agregala a la pantalla de inicio. Solo funciona en dispositivos autorizados.

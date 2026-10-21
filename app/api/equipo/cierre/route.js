@@ -43,7 +43,7 @@ export async function POST(req) {
   }
   const missing = stock.filter((s) => s.qty < s.min).map((s) => ({ ...s, falta: Math.round((s.min - s.qty) * 100) / 100 }));
 
-  const shift = await todayShift(me.staff.id);
+  const shift = await todayShift(me.staff.id, 'end');
   const { error } = await sb.from('staff_closings').insert({
     staff_id: me.staff.id, staff_name: me.staff.name, device_id: me.device.id, shift_id: shift?.id || null,
     day, photos, stock, missing, note: String(body.nota || '').slice(0, 500),

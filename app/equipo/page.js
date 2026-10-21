@@ -19,7 +19,7 @@ function readDevice() {
 
 export default function Equipo() {
   const [device, setDevice] = useState(null);      // token del dispositivo
-  const [phase, setPhase] = useState('loading');   // loading | nodevice | pick | pin | home | fotos | stock | done
+  const [phase, setPhase] = useState('loading');   // loading | nodevice | pick | pin | home | llegada | fotos | stock | done
   const [deviceName, setDeviceName] = useState('');
   const [people, setPeople] = useState([]);
   const [who, setWho] = useState(null);
@@ -34,6 +34,8 @@ export default function Equipo() {
   const [nota, setNota] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
+  const [arrCam, setArrCam] = useState(false);     // cámara para la foto de llegada
+  const [arrival, setArrival] = useState(null);    // respuesta de /api/equipo/llegada
   const idle = useRef();
 
   const call = useCallback(async (path, { method = 'GET', body, form, tok } = {}) => {
@@ -47,7 +49,7 @@ export default function Equipo() {
 
   const reset = useCallback(() => {
     Object.values(shots).forEach((s) => s.url && URL.revokeObjectURL(s.url));
-    setToken(''); setMe(null); setWho(null); setPin(''); setErr(''); setShots({}); setCounts({}); setNota(''); setResult(null); setCam(null);
+    setToken(''); setMe(null); setWho(null); setPin(''); setErr(''); setShots({}); setCounts({}); setNota(''); setResult(null); setCam(null); setArrCam(false); setArrival(null);
     setPhase(device ? 'pick' : 'nodevice');
   }, [device, shots]);
 
@@ -133,6 +135,19 @@ export default function Equipo() {
     });
   }
 
+  async function onArrival(blob) {
+    setArrCam(false);
+    setBusy(true); setErr('');
+    const fd = new FormData();
+    fd.append('file', blob, 'llegada.jpg');
+    const r = await call('/api/equipo/llegada', { method: 'POST', form: fd });
+    setBusy(false);
+    if (!r.ok) { setErr(r.status === 401 ? 'Se cerró tu sesión. Volvé a ingresar.' : r.data.error || 'No se pudo marcar la llegada'); if (r.status === 401) reset(); return; }
+    setArrival(r.data);
+    setPhase('llegada');
+    loadMe();
+  }
+
   async function sendClosing() {
     setBusy(true); setErr('');
     const r = await call('/api/equipo/cierre', {
@@ -212,6 +227,13 @@ export default function Equipo() {
   const turnoHoy = (me?.turnos || []).filter((t) => t.dia === hoy);
   const proximos = (me?.turnos || []).filter((t) => t.dia !== hoy).slice(0, 6);
 
+  // turno al que corresponde marcar la llegada ahora: el de inicio más cercano (igual que el servidor)
+  const toMin = (t) => { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; };
+  const arrShift = turnoHoy.length ? turnoHoy.reduce((b, t) => (Math.abs(toMin(t.desde) - me.ahora) < Math.abs(toMin(b.desde) - me.ahora) ? t : b)) : null;
+  const llegadaDe = (id) => (me?.llegadas || []).find((a) => (a.shift_id || null) === (id || null));
+  const cierreDe = (id) => (me?.cierres || []).filter((c) => c.shift_id === id).pop();
+  const needArrival = me && !llegadaDe(arrShift?.id);
+
   if (phase === 'home') return (
     <div className="eq">
       <div className="eq-head">
@@ -220,23 +242,58 @@ export default function Equipo() {
       </div>
       <div className="card stack">
         <span className="eyebrow">Hoy</span>
-        {turnoHoy.length ? turnoHoy.map((t) => <div key={t.id} className="eq-shift"><b className="mono">{t.desde} – {t.hasta}</b>{t.nota ? <span className="muted">{t.nota}</span> : null}</div>) : <span className="muted">Hoy no tenés turno cargado.</span>}
-        {me.llegada ? <span className={`pill ${me.llegada.status === 'tarde' ? 'cancelado' : 'entregado'}`}>{LLEGADA[me.llegada.status]} · {hora(me.llegada.clock_in)}</span> : null}
+        {turnoHoy.length ? turnoHoy.map((t) => {
+          const a = llegadaDe(t.id), c = cierreDe(t.id);
+          return (
+            <div key={t.id} className="eq-turno">
+              <div className="eq-shift"><b className="mono">{t.desde} – {t.hasta}</b><span className="muted">{t.tipo || t.nota}</span></div>
+              <div className="chips">
+                {a ? <span className={`pill ${a.status === 'tarde' ? 'cancelado' : 'entregado'}`}>{LLEGADA[a.status]} · {hora(a.clock_in)}</span> : <span className="pill">Sin llegada</span>}
+                {c ? <span className="pill entregado">Cerrado · {hora(c.created_at)}</span> : null}
+              </div>
+            </div>
+          );
+        }) : <span className="muted">Hoy no tenés turno cargado.</span>}
+        {!turnoHoy.length && llegadaDe(null) ? <span className="pill entregado">Llegada marcada · {hora(llegadaDe(null).clock_in)}</span> : null}
       </div>
-      <button type="button" className="btn eq-big" onClick={() => { setErr(''); setPhase('fotos'); }}>Hacer cierre de turno</button>
-      {me.cerro_hoy ? <p className="muted" style={{ textAlign: 'center' }}>Ya hiciste un cierre hoy a las {hora(me.cerro_hoy)}.</p> : null}
+      <p className="eq-err" role="alert">{err}</p>
+      {needArrival ? (
+        <button type="button" className="btn wax eq-big" disabled={busy} onClick={() => { setErr(''); setArrCam(true); }}>
+          {busy ? 'Registrando…' : `Marcar llegada${arrShift ? ` · turno ${arrShift.desde}` : ''}`}
+        </button>
+      ) : null}
+      <button type="button" className={`btn eq-big ${needArrival ? 'ghost' : ''}`} onClick={() => { setErr(''); setPhase('fotos'); }}>Hacer cierre de turno</button>
       <div className="stack">
         <span className="eyebrow">Mis próximos turnos</span>
         {proximos.length ? (
           <div className="lst">
             {proximos.map((t) => (
-              <div className="li" key={t.id}><b>{dayLabel(t.dia, hoy)}</b><span className="mono">{t.desde} – {t.hasta}</span></div>
+              <div className="li" key={t.id}><b>{dayLabel(t.dia, hoy)}{t.tipo ? ` · ${t.tipo}` : ''}</b><span className="mono">{t.desde} – {t.hasta}</span></div>
             ))}
           </div>
         ) : <div className="empty">No hay turnos cargados para los próximos días.</div>}
       </div>
+      {arrCam ? <Camera title="Foto del local al llegar" stamp={() => `${me.staff.name} · Llegada · ${new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}`} onShot={onArrival} onClose={() => setArrCam(false)} /> : null}
     </div>
   );
+
+  if (phase === 'llegada') {
+    const tone = arrival?.estado === 'tarde' ? 'tarde' : arrival?.estado === 'sin_turno' ? 'neutro' : 'ok';
+    return (
+      <div className="eq">
+        <div className="eq-done">
+          <span className={`eq-ok ${tone}`} aria-hidden="true">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+          </span>
+          <span className={`pill ${tone === 'tarde' ? 'cancelado' : 'entregado'}`}>Llegada {arrival?.hora}{arrival?.turno ? ` · turno ${arrival.turno.desde} – ${arrival.turno.hasta}` : ''}</span>
+          <h1 className="eq-h">{arrival?.titulo}</h1>
+          <p>{arrival?.mensaje}</p>
+          {arrival?.ya_registrada ? <p className="muted">Tu llegada a este turno ya estaba marcada.</p> : null}
+          <button type="button" className="btn eq-big" onClick={() => setPhase('home')}>Empezar turno</button>
+        </div>
+      </div>
+    );
+  }
 
   const checks = me?.fotos || [];
   const items = me?.stock || [];
