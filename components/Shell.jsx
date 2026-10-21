@@ -15,7 +15,8 @@ const TABS = [
 export default function Shell({ children }) {
   const path = usePathname() || '/';
   const { unreadClient, cart, session, signOut } = useApp();
-  const inPanel = path.startsWith('/panel');
+  const inStaff = path.startsWith('/equipo');
+  const inPanel = path.startsWith('/panel') || inStaff;
   const cartN = Object.values(cart).reduce((a, b) => a + b, 0);
 
   return (
@@ -25,9 +26,10 @@ export default function Shell({ children }) {
           <Link className="brand" href="/" aria-label="Surf Coffee, inicio"><Isotipo className="brand-iso" /><Wordmark className="brand-wm" title="Surf Coffee" /></Link>
           {inPanel ? (
             <>
-              <span className="eyebrow" style={{ flex: 1 }}>Panel</span>
-              <Link className="mode" href="/">Ver la web</Link>
-              {session ? <button className="mode" onClick={signOut}>Cerrar sesión</button> : null}
+              <span className="eyebrow" style={{ flex: 1 }}>{inStaff ? 'Equipo' : 'Panel'}</span>
+              {!inStaff ? <Link className="mode" href="/equipo">Tablet del equipo</Link> : null}
+              {!inStaff ? <Link className="mode" href="/">Ver la web</Link> : null}
+              {session && !inStaff ? <button className="mode" onClick={signOut}>Cerrar sesión</button> : null}
             </>
           ) : (
             <>
