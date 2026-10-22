@@ -21,7 +21,10 @@ export async function POST(req) {
   if (!ext) return json({ error: 'Formato no válido' }, 400);
   if (file.size > MAX) return json({ error: 'La foto es muy pesada' }, 400);
   const sb = adminClient();
-  const { data: chk } = await sb.from('closing_checks').select('id').eq('id', checkId).eq('active', true).maybeSingle();
+  const isExtra = checkId.startsWith('x-');
+  const { data: chk } = isExtra
+    ? await sb.from('extra_tasks').select('id').eq('id', checkId.slice(2)).eq('active', true).maybeSingle()
+    : await sb.from('closing_checks').select('id').eq('id', checkId).eq('active', true).maybeSingle();
   if (!chk) return json({ error: 'Ítem no válido' }, 400);
   const day = arNow().date;
   const path = `${day}/${me.staff.id}/${checkId}-${crypto.randomBytes(6).toString('hex')}.${ext}`;

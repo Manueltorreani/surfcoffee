@@ -283,7 +283,7 @@ export default function Equipo() {
           {busy ? 'Registrando…' : `Marcar llegada${arrShift ? ` · turno ${arrShift.desde}` : ''}`}
         </button>
       ) : null}
-      <button type="button" className={`btn eq-big ${needArrival ? 'ghost' : ''}`} disabled={!!closeBlock} onClick={() => { setErr(''); setPhase('fotos'); }}>
+      <button type="button" className={`btn eq-big ${needArrival ? 'ghost' : ''}`} disabled={!!closeBlock} onClick={async () => { setErr(''); await loadMe(); setPhase('fotos'); }}>
         {closeBlock || `Hacer cierre de turno${closeShift ? ` · ${closeShift.desde} – ${closeShift.hasta}` : ''}`}
       </button>
       <div className="stack">
@@ -327,10 +327,10 @@ export default function Equipo() {
     <div className="eq">
       <div className="eq-head">
         <button type="button" className="btn ghost sm" onClick={() => setPhase('home')}>Volver</button>
-        <span className="eq-step">Paso 1 de 2</span>
+        <span className="eq-step">{me?.stock_requerido ? 'Paso 1 de 2' : 'Último paso'}</span>
       </div>
       <div className="ph" style={{ marginBottom: 0 }}><div><div className="eyebrow">Cierre de turno</div><h2>Fotos</h2></div><b className={`mono ${done === checks.length ? 'ok' : ''}`}>{done} de {checks.length}</b></div>
-      <p className="muted">Sacá una foto de cada cosa con la cámara. Se guarda con tu nombre, fecha y hora.</p>
+      <p className="muted">Sacá una foto de cada cosa con la cámara. Se guarda con tu nombre, fecha y hora.{checks.some((c) => c.extra) ? ' Hoy hay tareas extra: hacelas y sacales foto también.' : ''}</p>
       <div className="shots">
         {checks.map((c) => {
           const s = shots[c.id];
@@ -338,6 +338,7 @@ export default function Equipo() {
             <button key={c.id} type="button" className={`shot ${s ? 'has' : ''}`} onClick={() => setCam(c)} disabled={!!uploading} aria-label={s ? `${c.name}: foto lista, tocá para repetirla` : `Sacar foto: ${c.name}`}>
               {s ? <img src={s.url} alt="" /> : null}
               <span className="shot-t">
+                {c.extra ? <span className="pill nuevo" style={{ justifySelf: 'start' }}>Tarea extra</span> : null}
                 <b>{c.name}</b>
                 <span>{uploading === c.id ? 'Subiendo…' : s ? `Lista · ${hora(s.taken_at)}` : c.hint || 'Sacar foto'}</span>
               </span>
@@ -345,10 +346,16 @@ export default function Equipo() {
           );
         })}
       </div>
+      {!me?.stock_requerido ? (
+        <label className="f">Algo para avisar (opcional)
+          <textarea value={nota} onChange={(e) => setNota(e.target.value)} placeholder="Ej: se rompió la jarra chica" maxLength={500} />
+        </label>
+      ) : null}
       <p className="eq-err" role="alert">{err}</p>
-      <button type="button" className="btn eq-big" disabled={done < checks.length || !!uploading} onClick={() => { setErr(''); setPhase('stock'); }}>
-        {done < checks.length ? `Faltan ${checks.length - done} ${checks.length - done === 1 ? 'foto' : 'fotos'}` : 'Siguiente: stock'}
+      <button type="button" className="btn eq-big" disabled={done < checks.length || !!uploading || busy} onClick={() => { setErr(''); if (me?.stock_requerido) setPhase('stock'); else sendClosing(); }}>
+        {done < checks.length ? `Faltan ${checks.length - done} ${checks.length - done === 1 ? 'foto' : 'fotos'}` : busy ? 'Enviando…' : me?.stock_requerido ? 'Siguiente: stock' : 'Cerrar turno'}
       </button>
+      {!me?.stock_requerido ? <p className="muted" style={{ textAlign: 'center', fontSize: 13 }}>El stock se cuenta en el cierre de la tarde.</p> : null}
       {cam ? <Camera title={cam.name} stamp={stamp(cam)} onShot={onShot} onClose={() => setCam(null)} /> : null}
     </div>
   );

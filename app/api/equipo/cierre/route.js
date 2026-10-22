@@ -1,5 +1,5 @@
 import { adminClient, json } from '@/lib/server';
-import { addDays, arNow, checkPlace, closingMessage, hhmm, parseGeo, requireStaff, cleanupPhotos, todayShift } from '@/lib/staff';
+import { addDays, arNow, checkPlace, closingMessage, closingPlan, hhmm, parseGeo, requireStaff, cleanupPhotos } from '@/lib/staff';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -19,7 +19,8 @@ export async function POST(req) {
   if (!place.ok) return json({ error: place.error }, 403);
 
   // orden del turno: primero la llegada, un solo cierre por turno
-  const shift = await todayShift(me.staff.id, 'end');
+  const plan = await closingPlan(me.staff.id);
+  const shift = plan.shift;
   if (shift) {
     const [cl, at] = await Promise.all([
       sb.from('staff_closings').select('id', { count: 'exact', head: true }).eq('shift_id', shift.id),
@@ -29,10 +30,8 @@ export async function POST(req) {
     if (cl.count) return json({ error: `El turno de ${turno} ya está cerrado.` }, 409);
     if (!at.count) return json({ error: `Primero marcá la llegada del turno de ${turno}.` }, 409);
   }
-  const [checks, items] = await Promise.all([
-    sb.from('closing_checks').select('id, name').eq('active', true).order('sort'),
-    sb.from('stock_items').select('id, name, unit, min_qty').eq('active', true).order('sort'),
-  ]);
+  const checks = { data: [...plan.checks, ...plan.extras] };
+  const items = { data: plan.stockRequired ? plan.items : [] };
 
   // fotos: una por cada ítem activo, subidas por esta persona hoy (o anoche, si el cierre pasa la medianoche)
   const okPath = (p, checkId) => [day, addDays(day, -1)].some((d) => p.startsWith(`${d}/${me.staff.id}/${checkId}-`));
@@ -43,7 +42,7 @@ export async function POST(req) {
     if (!f || typeof f.path !== 'string' || !okPath(f.path, c.id)) {
       return json({ error: `Falta la foto: ${c.name}` }, 400);
     }
-    photos.push({ check_id: c.id, name: c.name, path: f.path, taken_at: f.taken_at || null });
+    photos.push({ check_id: c.id, name: c.name, path: f.path, taken_at: f.taken_at || null, ...(c.extra ? { extra: true } : {}) });
   }
 
   // stock: todos los insumos con un número
@@ -64,7 +63,7 @@ export async function POST(req) {
     day, photos, stock, missing, note: String(body.nota || '').slice(0, 500), ip: place.ip || null, geo: place.geo || null,
   });
   if (error) return json({ error: 'No se pudo guardar el cierre' }, 500);
-  const msg = await closingMessage(me.staff);
+  const msg = await closingMessage(me.staff, plan.stockRequired);
   await cleanupPhotos();
   return json({ ok: true, faltantes: missing.length, ...msg });
 }

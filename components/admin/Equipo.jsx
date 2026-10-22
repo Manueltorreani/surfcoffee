@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../AppProvider';
 import { DEVICE_KEY } from '@/lib/device';
 import { cleanName, when } from '@/lib/utils';
+import TareasExtra from './TareasExtra';
 
 async function sha256(t) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
@@ -259,7 +260,7 @@ export default function Equipo() {
         </div>
       </div>
 
-      <div className="ph"><div><div className="eyebrow">Cierre de turno</div><h2 style={{ fontSize: 22 }}>Fotos obligatorias</h2></div></div>
+      <div className="ph"><div><div className="eyebrow">Cierre de turno</div><h2 style={{ fontSize: 22 }}>Fotos de todos los días</h2></div></div>
       <form className="card stack" style={{ marginBottom: 12 }} onSubmit={addCheck}>
         <div className="row">
           <label className="f">Qué hay que fotografiar<input type="text" value={chk.name} onChange={(e) => setChk((c) => ({ ...c, name: e.target.value }))} placeholder="Heladera exhibidora" /></label>
@@ -286,6 +287,7 @@ export default function Equipo() {
           ))}
         </div>
       ) : <div className="empty">Sin fotos obligatorias.</div>}
+      <TareasExtra />
     </>
   );
 }

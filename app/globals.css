@@ -363,3 +363,4 @@ input[type=email],input[type=password],input[type=time]{width:100%;border:1px so
 .tdefs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .days{display:flex;gap:4px;flex-wrap:wrap}
 .days label{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:8px;padding:4px 8px;cursor:pointer}
+.shot .shot-t .pill.nuevo{color:var(--wax-ink);background:var(--wax);border-color:transparent}

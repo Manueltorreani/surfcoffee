@@ -9,7 +9,12 @@ const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const label = (iso) => { const d = new Date(iso + 'T12:00:00Z'); return `${DAYS[d.getUTCDay()]} ${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`; };
 
 export default function Stock() {
-  const { sb, toast } = useApp();
+  const { sb, toast, settings, setSettings } = useApp();
+  async function setTurno(v) {
+    const { data, error } = await sb.from('settings').update({ stock_turno: v }).eq('id', 1).select('*').single();
+    if (error) return toast(/stock_turno/.test(error.message) ? 'Falta correr supabase/2026-10-tareas.sql en Supabase' : 'No se pudo guardar');
+    setSettings(data); toast('Guardado');
+  }
   const [items, setItems] = useState([]);
   const [last, setLast] = useState(null);
   const [form, setForm] = useState(blank);
@@ -19,9 +24,9 @@ export default function Stock() {
   const load = useCallback(async () => {
     const [i, c] = await Promise.all([
       sb.from('stock_items').select('*').order('sort').order('name'),
-      sb.from('staff_closings').select('day, staff_name, created_at, stock').order('created_at', { ascending: false }).limit(1),
+      sb.from('staff_closings').select('day, staff_name, created_at, stock').order('created_at', { ascending: false }).limit(20),
     ]);
-    setItems(i.data || []); setLast((c.data || [])[0] || null);
+    setItems(i.data || []); setLast((c.data || []).find((x) => (x.stock || []).length) || null);
   }, [sb]);
   useEffect(() => { load(); }, [load]);
 
@@ -48,6 +53,14 @@ export default function Stock() {
         {last ? <span className="muted">Último conteo: {label(last.day)} · {last.staff_name}</span> : null}
       </div>
 
+      <div className="banner row" style={{ marginBottom: 16, alignItems: 'center' }}>
+        <span style={{ flex: '1 1 260px' }}>El stock se cuenta en el cierre de:</span>
+        <div className="chips" style={{ flex: '0 0 auto' }}>
+          {[['tarde', 'La tarde (fin del día)'], ['manana', 'La mañana'], ['todos', 'Todos los turnos']].map(([k, l]) => (
+            <button key={k} type="button" className="chip" aria-pressed={(settings?.stock_turno || 'tarde') === k} onClick={() => setTurno(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
       {missing.length ? (
         <div className="found" style={{ marginBottom: 16 }}>
           <div><b>Para comprar ({missing.length})</b><div style={{ fontSize: 14 }}>{missing.map((m) => `${m.name} (faltan ${num(m.falta)} ${m.unit})`).join(' · ')}</div></div>

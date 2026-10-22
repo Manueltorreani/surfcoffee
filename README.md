@@ -30,6 +30,8 @@ Web de Surf Coffee (Mar del Plata): quiénes somos, menú, sistema de puntos, de
 - Orden del turno: primero se marca la llegada y al final el cierre. No se puede marcar la llegada de un turno ya cerrado, ni cerrar sin haber marcado la llegada (un cierre por turno).
 - Solo desde el café: la llegada y el cierre se rechazan si la tablet está fuera del radio del café o fuera del wifi del local (cuando están configurados).
 - Marcar llegada: saca una foto del local y el sistema registra la hora y la compara con el turno (antes / justo / tarde). Una llegada por turno, así quien hace mañana y tarde marca las dos.
+- Tareas extra (Panel → Equipo): tareas que no son de todos los días (ej. bocas y filtros con cafiza los lunes, limpiar estanterías una fecha puntual). Aparecen en el cierre que elijas y piden foto.
+- El stock se cuenta solo en el cierre de la tarde (fin del día); se cambia en Panel → Stock.
 - Cierre de turno: una foto con la cámara en vivo de cada cosa (cafetera, cocina, fiambrera, baños, pisos…), estampada con nombre, fecha y hora; después el conteo de stock. Al terminar aparece un mensaje que los motiva a mejorar.
 - La sesión se cierra sola a los 5 minutos sin uso.
 - La apertura de caja y el arqueo se hacen en el software de ventas. Si el software de ventas llama a `/api/pos/apertura`, también registra la llegada (ver API abajo).
@@ -82,7 +84,7 @@ Copiá `.env.example` a `.env.local` y completá con los datos de **Supabase →
 | `POS_API_KEY` | clave para tu software de ventas (`openssl rand -hex 32`) |
 
 ### Sistema del equipo (tablet)
-1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql`, `supabase/2026-10-ubicacion.sql` y `supabase/2026-10-fotos.sql`.
+1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql`, `supabase/2026-10-ubicacion.sql`, `supabase/2026-10-fotos.sql` y `supabase/2026-10-tareas.sql`.
 2. En el panel → **Equipo**: agregá a cada persona con su PIN (empezando por vos y Mate como dueños).
 3. Desde la **tablet del café**, entrá a `/panel` con tu usuario → **Equipo → Autorizar este dispositivo**. Después cerrá sesión.
 4. En la tablet abrí `/equipo` y agregala a la pantalla de inicio. Solo funciona en dispositivos autorizados.
