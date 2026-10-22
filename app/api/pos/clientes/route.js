@@ -1,6 +1,9 @@
 import { adminClient, json, posAuthorized } from '@/lib/server';
 import { nameKey } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // Software de ventas → buscar clientes por nombre para mostrar sus puntos.
 // GET /api/pos/clientes?q=juan%20pe   header x-api-key: <POS_API_KEY>
 export async function GET(req) {

@@ -1,5 +1,8 @@
 import { adminClient, json, requireAdmin } from '@/lib/server';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // El administrador elimina un cliente: su cuenta web, puntos, movimientos, chat y archivos.
 export async function POST(req) {
   const admin = await requireAdmin(req);

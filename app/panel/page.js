@@ -8,8 +8,12 @@ import Clientes from '@/components/admin/Clientes';
 import MenuAdmin from '@/components/admin/MenuAdmin';
 import Premios from '@/components/admin/Premios';
 import Ajustes from '@/components/admin/Ajustes';
+import Equipo from '@/components/admin/Equipo';
+import Turnos from '@/components/admin/Turnos';
+import Cierres from '@/components/admin/Cierres';
+import Stock from '@/components/admin/Stock';
 
-const TABS = [['inbox', 'Pedidos'], ['caja', 'Caja y puntos'], ['clientes', 'Clientes'], ['menu', 'Menú'], ['premios', 'Premios'], ['ajustes', 'Ajustes']];
+const TABS = [['inbox', 'Pedidos'], ['caja', 'Caja y puntos'], ['clientes', 'Clientes'], ['menu', 'Menú'], ['premios', 'Premios'], ['cierres', 'Cierres'], ['stock', 'Stock'], ['turnos', 'Turnos'], ['equipo', 'Equipo'], ['ajustes', 'Ajustes']];
 
 export default function Panel() {
   const { sb, session, authReady, isAdmin } = useApp();
@@ -34,7 +38,7 @@ export default function Panel() {
   if (!session) return <div className="wrap"><section className="sec" style={{ borderTop: 0 }}><AuthCard why="Acceso del equipo" staff /></section></div>;
   if (!isAdmin) return <div className="wrap"><section className="sec" style={{ borderTop: 0 }}><div className="banner">Esta sección es solo para el equipo de Surf Coffee.</div></section></div>;
 
-  const View = { inbox: Inbox, caja: Caja, clientes: Clientes, menu: MenuAdmin, premios: Premios, ajustes: Ajustes }[tab] || Inbox;
+  const View = { inbox: Inbox, caja: Caja, clientes: Clientes, menu: MenuAdmin, premios: Premios, cierres: Cierres, stock: Stock, turnos: Turnos, equipo: Equipo, ajustes: Ajustes }[tab] || Inbox;
   return (
     <div className="wrap">
       <div className="admin">

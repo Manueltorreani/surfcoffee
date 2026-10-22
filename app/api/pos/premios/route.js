@@ -1,5 +1,8 @@
 import { adminClient, json, posAuthorized } from '@/lib/server';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // GET /api/pos/premios   header x-api-key: <POS_API_KEY>
 export async function GET(req) {
   if (!posAuthorized(req)) return json({ error: 'API key inválida' }, 401);

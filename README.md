@@ -19,6 +19,22 @@ Web de Surf Coffee (Mar del Plata): quiénes somos, menú, sistema de puntos, de
 - Caja y puntos: registrar compras por nombre y apellido, canjear premios.
 - Clientes: listado, métricas y cambio de contraseña.
 - Menú, Premios y Ajustes (textos, horarios, zona de entrega, puntos).
+- Cierres: fotos y conteo de stock de cada cierre de turno, con botón para mandar los faltantes por WhatsApp.
+- Stock: insumos que se cuentan al cierre, con su mínimo; lista de lo que hay que comprar.
+- Turnos: dos turnos fijos (Mañana 08:30–13:00 de lunes a sábado, Tarde 15:30–20:00 todos los días); se asignan tocando el turno de cada persona y día. Muestra la hora de llegada y la foto. Los horarios se cambian desde la misma pestaña (por ejemplo en verano).
+- Equipo: personas (empleados y dueños), PIN de cada uno, dispositivos autorizados, tolerancia de llegada y fotos obligatorias del cierre.
+
+**Equipo** (`/equipo`, solo en la tablet autorizada del café)
+- Cada persona elige su nombre y entra con su PIN de 4 números (Manu y Mate también, como uno más del equipo).
+- Ve su turno de hoy y sus próximos turnos.
+- Orden del turno: primero se marca la llegada y al final el cierre. No se puede marcar la llegada de un turno ya cerrado, ni cerrar sin haber marcado la llegada (un cierre por turno).
+- Solo desde el café: la llegada y el cierre se rechazan si la tablet está fuera del radio del café o fuera del wifi del local (cuando están configurados).
+- Marcar llegada: saca una foto del local y el sistema registra la hora y la compara con el turno (antes / justo / tarde). Una llegada por turno, así quien hace mañana y tarde marca las dos.
+- Tareas extra (Panel → Equipo): tareas que no son de todos los días (ej. bocas y filtros con cafiza los lunes, limpiar estanterías una fecha puntual). Aparecen en el cierre que elijas y piden foto.
+- El stock se cuenta solo en el cierre de la tarde (fin del día); se cambia en Panel → Stock.
+- Cierre de turno: una foto con la cámara en vivo de cada cosa (cafetera, cocina, fiambrera, baños, pisos…), estampada con nombre, fecha y hora; después el conteo de stock. Al terminar aparece un mensaje que los motiva a mejorar.
+- La sesión se cierra sola a los 5 minutos sin uso.
+- La apertura de caja y el arqueo se hacen en el software de ventas. Si el software de ventas llama a `/api/pos/apertura`, también registra la llegada (ver API abajo).
 
 Los precios del pedido, la zona y el horario se validan en la base de datos, no solo en el navegador.
 
@@ -67,6 +83,21 @@ Copiá `.env.example` a `.env.local` y completá con los datos de **Supabase →
 | `NEXT_PUBLIC_SITE_URL` | URL pública de la web |
 | `POS_API_KEY` | clave para tu software de ventas (`openssl rand -hex 32`) |
 
+### Sistema del equipo (tablet)
+1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql`, `supabase/2026-10-ubicacion.sql`, `supabase/2026-10-fotos.sql`, `supabase/2026-10-tareas.sql` y `supabase/2026-10-tareas-turno.sql`.
+2. En el panel → **Equipo**: agregá a cada persona con su PIN (empezando por vos y Mate como dueños).
+3. Desde la **tablet del café**, entrá a `/panel` con tu usuario → **Equipo → Autorizar este dispositivo**. Después cerrá sesión.
+4. En la tablet abrí `/equipo` y agregala a la pantalla de inicio. Solo funciona en dispositivos autorizados.
+5. **Estando en el café**, en Panel → Equipo → **Ubicación del café**: tocá *Usar mi ubicación actual* y *Guardar esta conexión como wifi del café*. Desde ahí, la llegada y el cierre solo se pueden marcar en el local (por GPS o por el wifi). No autorices como dispositivo compus o celulares personales.
+6. En **Turnos** cargá los horarios de la semana (o copiá la anterior) y en **Stock** los insumos con su mínimo.
+
+### Dominio aparte para el equipo (opcional, recomendado)
+Para que la tablet y el panel no se crucen con la web de clientes:
+1. Vercel → proyecto → **Settings → Domains → Add**: escribí `surfcoffee-equipo.vercel.app` (o el nombre libre que quieras, o un subdominio propio) y asignalo a **Production**.
+2. **Settings → Environment Variables**: `STAFF_HOST` = ese dominio (solo Production) → **Redeploy**.
+3. Desde ahí: el dominio del equipo solo muestra `/equipo` y `/panel`, y en la web de clientes esas dos rutas mandan al dominio del equipo. La API sigue funcionando en los dos.
+4. Como es otro dominio, en la tablet hay que volver a iniciar sesión en el panel, autorizar el dispositivo y dar permiso de ubicación una vez.
+
 ### 4. Probar en tu compu
 ```bash
 npm install
@@ -111,6 +142,32 @@ POST /api/pos/canjes
 { "cliente_id": "uuid", "premio_id": "uuid" }
 ```
 
+**Equipo: lista de personas (para el login de cada cajero)**
+```http
+GET /api/pos/equipo
+```
+Respuesta: `[{ "id", "name", "role", "has_pin" }]`
+
+**Equipo: verificar PIN** (el mismo PIN que usan en la tablet)
+```http
+POST /api/pos/staff-login
+{ "staff_id": "uuid", "pin": "1234" }
+```
+Respuesta: `{ "ok": true, "staff": { "id", "name", "role" } }`. Con 5 intentos fallidos se bloquea 5 minutos.
+
+**Equipo: apertura de caja** (registra la llegada y devuelve el mensaje para mostrar)
+```http
+POST /api/pos/apertura
+{ "staff_id": "uuid" }
+```
+Respuesta:
+```json
+{ "estado": "antes | justo | tarde | sin_turno", "minutos": -8, "hora": "07:52",
+  "turno": { "desde": "08:00", "hasta": "14:00" },
+  "titulo": "¡8 min antes, Lucía!", "mensaje": "Así da gusto arrancar…", "ya_registrada": false }
+```
+Se compara con el turno cargado en el panel y la tolerancia de Equipo. Si se llama dos veces en el mismo turno, devuelve la primera llegada.
+
 Ejemplo en Node:
 ```js
 await fetch('https://TU-WEB/api/pos/compras', {
@@ -125,8 +182,8 @@ await fetch('https://TU-WEB/api/pos/compras', {
 ## Estructura
 
 ```
-app/                 páginas (/, /menu, /puntos, /delivery, /cuenta, /reset, /panel) y API
-components/          interfaz compartida (chat, mapa, login) y panel (components/admin)
+app/                 páginas (/, /menu, /puntos, /delivery, /cuenta, /reset, /panel, /equipo) y API
+components/          interfaz compartida (chat, mapa, login), panel (components/admin) y equipo (components/equipo)
 lib/                 utilidades y clientes de Supabase
 supabase/schema.sql  base de datos: tablas, reglas de acceso, funciones
 supabase/seed.sql    menú y premios de ejemplo
@@ -138,6 +195,8 @@ prototipo/           prototipo original en un solo HTML (referencia)
 - 1 punto cada `pesos_por_punto` pesos (Ajustes). Los pedidos por delivery no suman puntos.
 - Si alguien compró en el local y después crea su cuenta con el mismo nombre, se le suman los puntos que ya tenía.
 - Los archivos del chat son privados: solo los ve el cliente dueño de la conversación y el café.
+- Las fotos de los cierres y llegadas son privadas (bucket `equipo` de Supabase Storage): solo las ven los administradores, se achican a 1024 px y se borran solas después de `fotos_dias` días (2 por defecto; se cambia en Panel → Cierres). Los datos (horas, stock, quién cerró) quedan siempre en la base. Los PIN se guardan cifrados y nunca se leen desde el navegador.
+- La llegada cuenta como “antes” si abre caja antes del horario, “justo” hasta la tolerancia (10 min por defecto) y “tarde” después.
 
 ## Próximos pasos posibles
 - Código de verificación por WhatsApp (plantilla de autenticación de la API de WhatsApp Business).

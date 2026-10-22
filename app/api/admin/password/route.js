@@ -1,5 +1,8 @@
 import { adminClient, json, requireAdmin } from '@/lib/server';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // El administrador le pone una contraseña nueva a un cliente.
 export async function POST(req) {
   const admin = await requireAdmin(req);

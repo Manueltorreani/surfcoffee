@@ -1,5 +1,8 @@
 import { adminClient, json, posAuthorized } from '@/lib/server';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 // Software de ventas → registrar una compra en el local y sumar puntos.
 // POST /api/pos/compras   header x-api-key: <POS_API_KEY>
 // body: { "nombre": "Juan Pérez", "monto": 12500 }
