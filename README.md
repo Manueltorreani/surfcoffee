@@ -84,7 +84,7 @@ Copiá `.env.example` a `.env.local` y completá con los datos de **Supabase →
 | `POS_API_KEY` | clave para tu software de ventas (`openssl rand -hex 32`) |
 
 ### Sistema del equipo (tablet)
-1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql`, `supabase/2026-10-ubicacion.sql`, `supabase/2026-10-fotos.sql` y `supabase/2026-10-tareas.sql`.
+1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql`, `supabase/2026-10-ubicacion.sql`, `supabase/2026-10-fotos.sql`, `supabase/2026-10-tareas.sql` y `supabase/2026-10-tareas-turno.sql`.
 2. En el panel → **Equipo**: agregá a cada persona con su PIN (empezando por vos y Mate como dueños).
 3. Desde la **tablet del café**, entrá a `/panel` con tu usuario → **Equipo → Autorizar este dispositivo**. Después cerrá sesión.
 4. En la tablet abrí `/equipo` y agregala a la pantalla de inicio. Solo funciona en dispositivos autorizados.

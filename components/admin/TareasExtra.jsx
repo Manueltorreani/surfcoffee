@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../AppProvider';
 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const TURNO = { tarde: 'cierre de la tarde', manana: 'cierre de la mañana', todos: 'todos los cierres' };
+const TURNO = { tarde: 'solo tarde', manana: 'solo mañana', todos: 'mañana y tarde' };
 const blank = { name: '', hint: '', mode: 'semanal', day: '', weekdays: [], shift_kind: 'tarde' };
 const fecha = (iso) => { const d = new Date(iso + 'T12:00:00Z'); return `${DAYS[d.getUTCDay()]} ${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`; };
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -72,9 +72,9 @@ export default function TareasExtra() {
           )}
           <label className="f">En qué cierre
             <select value={form.shift_kind} onChange={(e) => setForm((f) => ({ ...f, shift_kind: e.target.value }))}>
-              <option value="tarde">Cierre de la tarde</option>
-              <option value="manana">Cierre de la mañana</option>
-              <option value="todos">Todos los cierres</option>
+              <option value="tarde">Solo tarde</option>
+              <option value="manana">Solo mañana</option>
+              <option value="todos">Mañana y tarde</option>
             </select>
           </label>
         </div>

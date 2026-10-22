@@ -21,7 +21,7 @@ export default function Equipo() {
   const [pinFor, setPinFor] = useState(null);
   const [newPin, setNewPin] = useState('');
   const [devName, setDevName] = useState('Tablet del café');
-  const [chk, setChk] = useState({ name: '', hint: '' });
+  const [chk, setChk] = useState({ name: '', hint: '', shift_kind: 'todos' });
   const [tol, setTol] = useState('');
   const [confirm, setConfirm] = useState(null);
   const [missingDb, setMissingDb] = useState(false);
@@ -108,11 +108,16 @@ export default function Equipo() {
     e.preventDefault();
     if (!chk.name.trim()) return;
     const sort = (checks.reduce((m, c) => Math.max(m, c.sort || 0), 0) || 0) + 10;
-    const { error } = await sb.from('closing_checks').insert({ name: chk.name.trim(), hint: chk.hint.trim(), sort });
+    const row = { name: chk.name.trim(), hint: chk.hint.trim(), sort, ...(chk.shift_kind !== 'todos' ? { shift_kind: chk.shift_kind } : {}) };
+    const { error } = await sb.from('closing_checks').insert(row);
     if (error) return toast('No se pudo agregar');
-    setChk({ name: '', hint: '' }); load();
+    setChk({ name: '', hint: '', shift_kind: 'todos' }); load();
   }
-  async function patchCheck(id, patch) { await sb.from('closing_checks').update(patch).eq('id', id); load(); }
+  async function patchCheck(id, patch) {
+    const { error } = await sb.from('closing_checks').update(patch).eq('id', id);
+    if (error) toast(/shift_kind/.test(error.message) ? 'Falta correr supabase/2026-10-tareas-turno.sql en Supabase' : 'No se pudo guardar');
+    load();
+  }
   async function moveCheck(i, dir) {
     const j = i + dir;
     if (j < 0 || j >= checks.length) return;
@@ -260,11 +265,18 @@ export default function Equipo() {
         </div>
       </div>
 
-      <div className="ph"><div><div className="eyebrow">Cierre de turno</div><h2 style={{ fontSize: 22 }}>Fotos de todos los días</h2></div></div>
+      <div className="ph"><div><div className="eyebrow">Cierre de turno</div><h2 style={{ fontSize: 22 }}>Fotos de todos los días</h2></div><span className="muted">Elegí si van en el cierre de la mañana, de la tarde o en los dos (ej. sacar la basura: solo tarde).</span></div>
       <form className="card stack" style={{ marginBottom: 12 }} onSubmit={addCheck}>
         <div className="row">
           <label className="f">Qué hay que fotografiar<input type="text" value={chk.name} onChange={(e) => setChk((c) => ({ ...c, name: e.target.value }))} placeholder="Heladera exhibidora" /></label>
           <label className="f">Cómo tiene que quedar (ayuda)<input type="text" value={chk.hint} onChange={(e) => setChk((c) => ({ ...c, hint: e.target.value }))} placeholder="Vidrios limpios y productos ordenados" /></label>
+          <label className="f" style={{ flex: '0 1 180px' }}>En qué cierre
+            <select value={chk.shift_kind} onChange={(e) => setChk((c) => ({ ...c, shift_kind: e.target.value }))}>
+              <option value="todos">Mañana y tarde</option>
+              <option value="manana">Solo mañana</option>
+              <option value="tarde">Solo tarde</option>
+            </select>
+          </label>
           <button className="btn" style={{ flex: '0 0 auto' }}>Agregar</button>
         </div>
       </form>
@@ -275,6 +287,11 @@ export default function Equipo() {
               <div className="row" style={{ alignItems: 'center' }}>
                 <input type="text" aria-label="Nombre" defaultValue={c.name} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== c.name && patchCheck(c.id, { name: e.target.value.trim() })} />
                 <input type="text" aria-label="Ayuda" defaultValue={c.hint} onBlur={(e) => e.target.value.trim() !== c.hint && patchCheck(c.id, { hint: e.target.value.trim() })} />
+                <select aria-label={`En qué cierre: ${c.name}`} value={c.shift_kind || 'todos'} onChange={(e) => patchCheck(c.id, { shift_kind: e.target.value })} style={{ flex: '0 1 160px' }}>
+                  <option value="todos">Mañana y tarde</option>
+                  <option value="manana">Solo mañana</option>
+                  <option value="tarde">Solo tarde</option>
+                </select>
                 {!c.active ? <span className="pill" style={{ flex: '0 0 auto' }}>Oculto</span> : null}
               </div>
               <div className="acts">

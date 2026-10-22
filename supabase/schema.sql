@@ -625,3 +625,8 @@ create table if not exists public.extra_tasks (
 alter table public.extra_tasks enable row level security;
 drop policy if exists extra_tasks_admin on public.extra_tasks;
 create policy extra_tasks_admin on public.extra_tasks for all using (is_admin()) with check (is_admin());
+
+-- Actualización: las fotos de todos los días también se pueden marcar para
+-- el cierre de la mañana, de la tarde o los dos (ej. sacar la basura: solo tarde).
+-- Pegar en Supabase → SQL Editor → Run. Se puede correr más de una vez.
+alter table public.closing_checks add column if not exists shift_kind text not null default 'todos';
