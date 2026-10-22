@@ -14,7 +14,17 @@ export function missingText(missing, title) {
 export const waLink = (text) => `https://wa.me/?text=${encodeURIComponent(text)}`;
 
 export default function Cierres() {
-  const { sb, toast } = useApp();
+  const { sb, toast, settings, setSettings } = useApp();
+  const [gone, setGone] = useState({});
+  const [dias, setDias] = useState('');
+  useEffect(() => { if (settings) setDias(String(settings.fotos_dias ?? 2)); }, [settings]);
+  async function saveDias(e) {
+    e.preventDefault();
+    const v = Math.max(1, Math.min(60, Number(dias) || 2));
+    const { data, error } = await sb.from('settings').update({ fotos_dias: v }).eq('id', 1).select('*').single();
+    if (error) return toast(/fotos_dias/.test(error.message) ? 'Falta correr supabase/2026-10-fotos.sql en Supabase' : 'No se pudo guardar');
+    setSettings(data); toast(v === 1 ? 'Se guardan solo las fotos de hoy' : `Se guardan las fotos de los últimos ${v} días`);
+  }
   const [rows, setRows] = useState([]);
   const [limit, setLimit] = useState(30);
   const [open, setOpen] = useState(null);
@@ -30,13 +40,21 @@ export default function Cierres() {
     const paths = (c.photos || []).map((p) => p.path).filter((p) => !urls[p]);
     if (!paths.length) return;
     const { data, error } = await sb.storage.from('equipo').createSignedUrls(paths, 3600);
-    if (error) return toast('No se pudieron cargar las fotos');
-    setUrls((u) => ({ ...u, ...Object.fromEntries((data || []).filter((x) => x.signedUrl).map((x) => [x.path, x.signedUrl])) }));
+    const ok = (data || []).filter((x) => x.signedUrl);
+    setUrls((u) => ({ ...u, ...Object.fromEntries(ok.map((x) => [x.path, x.signedUrl])) }));
+    const have = new Set(ok.map((x) => x.path));
+    setGone((g) => ({ ...g, ...Object.fromEntries(paths.filter((p) => !have.has(p)).map((p) => [p, true])) }));
+    if (error && !ok.length && !/not found/i.test(error.message || '')) toast('No se pudieron cargar las fotos');
   }
 
   return (
     <>
       <div className="ph"><div><div className="eyebrow">Fin de turno</div><h2>Cierres</h2></div><span className="muted">Fotos y stock que carga el equipo en la tablet</span></div>
+      <form className="banner row" style={{ marginBottom: 16, alignItems: 'center' }} onSubmit={saveDias}>
+        <span style={{ flex: '1 1 260px' }}>Para no ocupar espacio, las fotos se borran solas: se guardan las de los últimos <b>{settings?.fotos_dias ?? 2} días</b> (incluye hoy). El stock, las horas y los datos del cierre quedan siempre.</span>
+        <label className="f" style={{ flex: '0 0 120px' }}>Días<input type="text" inputMode="numeric" value={dias} onChange={(e) => setDias(e.target.value.replace(/\D/g, '').slice(0, 2))} /></label>
+        <button className="btn sm" style={{ flex: '0 0 auto' }}>Guardar</button>
+      </form>
       {rows.length ? (
         <div className="lst">
           {rows.map((c) => {
@@ -63,7 +81,7 @@ export default function Cierres() {
                       {(c.photos || []).map((p) => (
                         <figure key={p.path}>
                           <button type="button" onClick={() => urls[p.path] && setBig({ src: urls[p.path], name: p.name })} aria-label={`Ampliar foto: ${p.name}`}>
-                            {urls[p.path] ? <img src={urls[p.path]} alt={p.name} loading="lazy" /> : null}
+                            {urls[p.path] ? <img src={urls[p.path]} alt={p.name} loading="lazy" /> : gone[p.path] ? <span className="muted" style={{ fontSize: 12, padding: 8, display: 'block' }}>Foto borrada (se guardan {settings?.fotos_dias ?? 2} días)</span> : null}
                           </button>
                           <figcaption>{p.name} <span className="muted mono">{clock(p.taken_at)}</span></figcaption>
                         </figure>

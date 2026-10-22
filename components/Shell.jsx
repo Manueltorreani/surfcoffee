@@ -28,7 +28,7 @@ export default function Shell({ children }) {
             <>
               <span className="eyebrow" style={{ flex: 1 }}>{inStaff ? 'Equipo' : 'Panel'}</span>
               {!inStaff ? <Link className="mode" href="/equipo">Tablet del equipo</Link> : null}
-              {!inStaff ? <Link className="mode" href="/">Ver la web</Link> : null}
+              {!inStaff ? <a className="mode" href={process.env.NEXT_PUBLIC_SITE_URL || '/'}>Ver la web</a> : null}
               {session && !inStaff ? <button className="mode" onClick={signOut}>Cerrar sesión</button> : null}
             </>
           ) : (

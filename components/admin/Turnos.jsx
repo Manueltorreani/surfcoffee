@@ -98,7 +98,7 @@ export default function Turnos() {
 
   async function openPhoto(a, name) {
     const { data, error } = await sb.storage.from('equipo').createSignedUrl(a.photo_path, 3600);
-    if (error || !data?.signedUrl) return toast('No se pudo abrir la foto');
+    if (error || !data?.signedUrl) return toast('La foto ya no está: se borran solas después de unos días');
     setBig({ src: data.signedUrl, name: `Llegada de ${name} · ${clock(a.clock_in)}` });
   }
 

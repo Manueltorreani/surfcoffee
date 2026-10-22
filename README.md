@@ -82,12 +82,19 @@ Copiá `.env.example` a `.env.local` y completá con los datos de **Supabase →
 | `POS_API_KEY` | clave para tu software de ventas (`openssl rand -hex 32`) |
 
 ### Sistema del equipo (tablet)
-1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql` y `supabase/2026-10-ubicacion.sql`.
+1. Si tu base se creó antes de este cambio, corré en el SQL Editor, en orden: `supabase/2026-10-equipo.sql`, `supabase/2026-10-turnos.sql`, `supabase/2026-10-ubicacion.sql` y `supabase/2026-10-fotos.sql`.
 2. En el panel → **Equipo**: agregá a cada persona con su PIN (empezando por vos y Mate como dueños).
 3. Desde la **tablet del café**, entrá a `/panel` con tu usuario → **Equipo → Autorizar este dispositivo**. Después cerrá sesión.
 4. En la tablet abrí `/equipo` y agregala a la pantalla de inicio. Solo funciona en dispositivos autorizados.
 5. **Estando en el café**, en Panel → Equipo → **Ubicación del café**: tocá *Usar mi ubicación actual* y *Guardar esta conexión como wifi del café*. Desde ahí, la llegada y el cierre solo se pueden marcar en el local (por GPS o por el wifi). No autorices como dispositivo compus o celulares personales.
 6. En **Turnos** cargá los horarios de la semana (o copiá la anterior) y en **Stock** los insumos con su mínimo.
+
+### Dominio aparte para el equipo (opcional, recomendado)
+Para que la tablet y el panel no se crucen con la web de clientes:
+1. Vercel → proyecto → **Settings → Domains → Add**: escribí `surfcoffee-equipo.vercel.app` (o el nombre libre que quieras, o un subdominio propio) y asignalo a **Production**.
+2. **Settings → Environment Variables**: `STAFF_HOST` = ese dominio (solo Production) → **Redeploy**.
+3. Desde ahí: el dominio del equipo solo muestra `/equipo` y `/panel`, y en la web de clientes esas dos rutas mandan al dominio del equipo. La API sigue funcionando en los dos.
+4. Como es otro dominio, en la tablet hay que volver a iniciar sesión en el panel, autorizar el dispositivo y dar permiso de ubicación una vez.
 
 ### 4. Probar en tu compu
 ```bash
@@ -186,7 +193,7 @@ prototipo/           prototipo original en un solo HTML (referencia)
 - 1 punto cada `pesos_por_punto` pesos (Ajustes). Los pedidos por delivery no suman puntos.
 - Si alguien compró en el local y después crea su cuenta con el mismo nombre, se le suman los puntos que ya tenía.
 - Los archivos del chat son privados: solo los ve el cliente dueño de la conversación y el café.
-- Las fotos de los cierres son privadas (bucket `equipo`): solo las ven los administradores. Los PIN se guardan cifrados y nunca se leen desde el navegador.
+- Las fotos de los cierres y llegadas son privadas (bucket `equipo` de Supabase Storage): solo las ven los administradores, se achican a 1024 px y se borran solas después de `fotos_dias` días (2 por defecto; se cambia en Panel → Cierres). Los datos (horas, stock, quién cerró) quedan siempre en la base. Los PIN se guardan cifrados y nunca se leen desde el navegador.
 - La llegada cuenta como “antes” si abre caja antes del horario, “justo” hasta la tolerancia (10 min por defecto) y “tarde” después.
 
 ## Próximos pasos posibles

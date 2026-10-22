@@ -1,5 +1,5 @@
 import { adminClient, json } from '@/lib/server';
-import { addDays, arNow, checkPlace, closingMessage, hhmm, parseGeo, requireStaff, todayShift } from '@/lib/staff';
+import { addDays, arNow, checkPlace, closingMessage, hhmm, parseGeo, requireStaff, cleanupPhotos, todayShift } from '@/lib/staff';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -65,5 +65,6 @@ export async function POST(req) {
   });
   if (error) return json({ error: 'No se pudo guardar el cierre' }, 500);
   const msg = await closingMessage(me.staff);
+  await cleanupPhotos();
   return json({ ok: true, faltantes: missing.length, ...msg });
 }

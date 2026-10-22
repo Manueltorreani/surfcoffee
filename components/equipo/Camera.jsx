@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
-const MAX_W = 1280;
+const MAX_W = 1024; // fotos livianas: alcanza para ver si está limpio
 
 // Dibuja la imagen achicada y le estampa nombre, ítem, fecha y hora abajo.
 function render(source, sw, sh, stamp) {
@@ -18,7 +18,7 @@ function render(source, sw, sh, stamp) {
   ctx.font = `600 ${fs}px system-ui, sans-serif`;
   ctx.textBaseline = 'middle';
   ctx.fillText(stamp, fs * 0.6, h - fs);
-  return new Promise((res) => c.toBlob(res, 'image/jpeg', 0.8));
+  return new Promise((res) => c.toBlob(res, 'image/jpeg', 0.7));
 }
 
 // Cámara en vivo a pantalla completa. Si el navegador no deja usar la cámara

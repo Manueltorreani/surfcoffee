@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { adminClient, json } from '@/lib/server';
-import { arNow, checkPlace, parseGeo, registerArrival, requireStaff, RuleError } from '@/lib/staff';
+import { arNow, checkPlace, parseGeo, registerArrival, requireStaff, cleanupPhotos, RuleError } from '@/lib/staff';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -30,6 +30,7 @@ export async function POST(req) {
   try {
     const r = await registerArrival(me.staff, 'tablet', path, place);
     if (r.ya_registrada) await sb.storage.from('equipo').remove([path]);
+    await cleanupPhotos();
     return json(r);
   } catch (e) {
     await sb.storage.from('equipo').remove([path]);
