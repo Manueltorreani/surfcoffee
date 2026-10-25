@@ -1,8 +1,20 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { animate, motion } from 'motion/react';
 import { useApp } from '@/components/AppProvider';
 import AuthCard from '@/components/AuthCard';
 import { money, num, pwErr, when } from '@/lib/utils';
+
+// número que sube hasta el saldo actual
+function CountUp({ value }) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setV(value); return; }
+    const c = animate(0, value, { duration: 1.2, ease: [0.16, 1, 0.3, 1], onUpdate: (x) => setV(Math.round(x)) });
+    return () => c.stop();
+  }, [value]);
+  return <>{num(v)}</>;
+}
 
 function txLabel(t) {
   if (t.type === 'compra') return `Compra en el local ${money(t.amount)}`;
@@ -59,10 +71,11 @@ export default function Puntos() {
         <div className="two">
           <div className="stack">
             <div className="pcard">
+              <svg className="pcard-wave" viewBox="0 0 600 70" preserveAspectRatio="none" aria-hidden="true"><path fill="currentColor" d="M0 30 q 75 -26 150 0 t 150 0 t 150 0 t 150 0 V70 H0Z" /></svg>
               <div className="lbl">Hola, {customer.name}</div>
-              <div className="num mono">{num(pts)}</div>
+              <div className="num" aria-label={`${num(pts)} puntos`}><CountUp value={pts} /></div>
               <div className="lbl">puntos disponibles</div>
-              <div className="gauge" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><i style={{ width: pct + '%' }} /></div>
+              <div className="gauge" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><motion.i initial={{ width: 0 }} animate={{ width: pct + '%' }} transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }} /></div>
               <div style={{ fontWeight: 600 }}>{next ? `Te faltan ${num(next.cost - pts)} para ${next.name}` : rws.length ? '¡Podés canjear cualquier premio!' : 'Seguí sumando.'}</div>
             </div>
             <p className="muted" style={{ fontSize: 14 }}>

@@ -65,8 +65,10 @@ create table if not exists public.menu_items (
   price int not null default 0,
   sort int not null default 100,
   available boolean not null default true,
+  image_url text,
   created_at timestamptz not null default now()
 );
+alter table public.menu_items add column if not exists image_url text;
 
 create table if not exists public.rewards (
   id uuid primary key default gen_random_uuid(),
@@ -395,6 +397,17 @@ create policy chat_files_read on storage.objects for select
 drop policy if exists chat_files_write on storage.objects;
 create policy chat_files_write on storage.objects for insert
   with check (bucket_id = 'chat' and (public.is_admin() or (storage.foldername(name))[1] = public.my_customer_id()::text));
+
+-- ---------- fotos del menú (públicas, las suben los administradores) ----------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('menu', 'menu', true, 5242880, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do nothing;
+drop policy if exists menu_files_write on storage.objects;
+create policy menu_files_write on storage.objects for insert with check (bucket_id = 'menu' and public.is_admin());
+drop policy if exists menu_files_update on storage.objects;
+create policy menu_files_update on storage.objects for update using (bucket_id = 'menu' and public.is_admin());
+drop policy if exists menu_files_delete on storage.objects;
+create policy menu_files_delete on storage.objects for delete using (bucket_id = 'menu' and public.is_admin());
 
 -- ---------- tiempo real ----------
 do $$ begin
