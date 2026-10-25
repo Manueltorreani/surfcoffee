@@ -34,3 +34,19 @@ export function BrandPattern() {
     </div>
   );
 }
+
+// Olas del inicio: tres capas que se repiten (el SVG mide el doble y se desplaza la mitad).
+const WAVE = (amp, y) => {
+  let d = `M0 ${y}`;
+  for (let i = 0; i < 8; i++) d += ` q 150 ${-amp} 300 0 t 300 0`;
+  return d + ' V 200 H 0 Z';
+};
+export function Waves() {
+  return (
+    <div className="waves" aria-hidden="true">
+      <svg className="w1" viewBox="0 0 4800 200" preserveAspectRatio="none"><path fill="currentColor" d={WAVE(46, 70)} /></svg>
+      <svg className="w2" viewBox="0 0 4800 200" preserveAspectRatio="none"><path fill="currentColor" d={WAVE(36, 80)} /></svg>
+      <svg className="w3" viewBox="0 0 4800 200" preserveAspectRatio="none"><path fill="currentColor" d={WAVE(28, 90)} /></svg>
+    </div>
+  );
+}

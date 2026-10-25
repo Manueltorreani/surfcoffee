@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { MotionConfig } from 'motion/react';
 import { supabase } from '@/lib/supabase';
 
 const Ctx = createContext(null);
@@ -79,17 +80,31 @@ export default function AppProvider({ children }) {
     return () => { sb.removeChannel(ch); };
   }, [sb, cid]);
 
+  // pedido en armado: se guarda en este navegador para no perderlo al recargar
+  useEffect(() => {
+    try { const c = JSON.parse(localStorage.getItem('sc-cart') || '{}'); if (c && typeof c === 'object') setCart(c); } catch {}
+  }, []);
+  useEffect(() => { try { localStorage.setItem('sc-cart', JSON.stringify(cart)); } catch {} }, [cart]);
+  const setQty = useCallback((id, d) => setCart((c) => {
+    const n = (c[id] || 0) + d; const x = { ...c };
+    if (n <= 0) delete x[id]; else x[id] = Math.min(n, 30);
+    return x;
+  }), []);
+
   const signOut = useCallback(async () => { await sb.auth.signOut(); setCustomer(null); setIsAdmin(false); }, [sb]);
 
   const value = useMemo(() => ({
     sb, session, authReady, customer, setCustomer, isAdmin, settings, setSettings, menu, setMenu, rewards, setRewards,
-    loadPublic, loadMe, signOut, cart, setCart, unreadClient, toast,
-  }), [sb, session, authReady, customer, isAdmin, settings, menu, rewards, loadPublic, loadMe, signOut, cart, unreadClient, toast]);
+    loadPublic, loadMe, signOut, cart, setCart, setQty, unreadClient, toast,
+  }), [sb, session, authReady, customer, isAdmin, settings, menu, rewards, loadPublic, loadMe, signOut, cart, setQty, unreadClient, toast]);
 
   return (
     <Ctx.Provider value={value}>
-      {children}
-      {toastMsg ? <div className="toast" role="status">{toastMsg}</div> : null}
+      <MotionConfig reducedMotion="user" transition={{ type: 'spring', stiffness: 420, damping: 38 }}>
+        {children}
+      </MotionConfig>
+      <div aria-live="polite" className="sr">{toastMsg}</div>
+      {toastMsg ? <div className="toast" key={toastMsg} aria-hidden="true">{toastMsg}</div> : null}
     </Ctx.Provider>
   );
 }

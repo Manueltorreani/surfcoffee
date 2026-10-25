@@ -47,6 +47,9 @@ Los precios del pedido, la zona y el horario se validan en la base de datos, no 
 
 Quien entra con Google no necesita confirmar el mail (Google ya lo verificó). Se guardan su nombre y su Gmail; el celular no se pide.
 
+### Fotos de los productos
+Si tu base se creó antes del rediseño, corré `supabase/2026-10-fotos-menu.sql` en el SQL Editor (una sola vez). Agrega la columna de foto y la carpeta pública `menu`. Después, en **Panel → Menú**, cada producto tiene **Subir foto** (se achica sola a WebP). Los productos sin foto muestran un dibujo según su categoría.
+
 ### 2. Tu usuario administrador
 1. **Authentication → Users → Add user**: tu email y contraseña, marcá “Auto confirm”.
 2. En **SQL Editor**:
@@ -132,6 +135,12 @@ supabase/schema.sql  base de datos: tablas, reglas de acceso, funciones
 supabase/seed.sql    menú y premios de ejemplo
 prototipo/           prototipo original en un solo HTML (referencia)
 ```
+
+## Diseño
+- Tipografía y colores del manual de marca (Archivo, azules Surf Coffee) más un tono arena para la comida. Modo oscuro automático.
+- Animaciones con [Motion](https://motion.dev): se desactivan solas si el celular tiene activado "reducir movimiento".
+- Inicio con el mar animado; carta con categorías que te siguen al bajar y ficha de cada producto; delivery con mapa que muestra si llegamos y el recorrido desde el café.
+- El pedido en armado queda guardado en el navegador aunque recargues la página.
 
 ## Reglas de negocio
 - Los puntos se identifican por **nombre y apellido** (sin tildes ni mayúsculas: “Juan Perez” = “juan pérez”).
