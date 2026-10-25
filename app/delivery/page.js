@@ -98,7 +98,7 @@ export default function Delivery() {
       <div className="wrap">
         {head}
         <section className="sec">
-          {session && !customer ? <div className="banner">Esta cuenta no tiene ficha de cliente (por ejemplo, una cuenta de administrador).</div> : <AuthCard why="Para pedir, iniciá sesión" />}
+          {session && !customer ? <div className="banner">Esta cuenta no tiene ficha de cliente (por ejemplo, una cuenta de administrador).</div> : <AuthCard why="Para chatear con nosotros y pedir" />}
         </section>
       </div>
     );
@@ -131,10 +131,18 @@ export default function Delivery() {
     <div className="wrap">
       {head}
 
+      <section className="sec dl-chat" id="chat">
+        <div className="sec-head">
+          <h2>Escribinos</h2>
+          <a className="btn ghost sm" href="#pedido">O armá tu pedido</a>
+        </div>
+        <Chat customerId={customer.id} role="cliente" title="Surf Coffee" subtitle="Te respondemos al toque por acá"
+          empty="Contanos qué querés y a dónde te lo llevamos. Podés mandar fotos o el comprobante de pago." />
+      </section>
+
       <section className="sec" id="pedido">
         <div className="sec-head">
           <h2>Armá tu pedido</h2>
-          <a className="btn ghost sm" href="#chat">Prefiero escribirles</a>
         </div>
         {!ds.open ? <div className="banner">{ds.why} {hoursText(settings)}. Podés escribirnos por el chat igual.</div> : null}
         <div className="order-grid">
@@ -184,15 +192,6 @@ export default function Delivery() {
             <motion.button className="btn wax" disabled={!ds.open || !items.length || busy} whileTap={{ scale: 0.97 }}>{sendLabel}</motion.button>
           </form>
         </div>
-      </section>
-
-      <section className="sec" id="chat">
-        <div className="sec-head">
-          <h2>Chat con el café</h2>
-          <p className="muted">Escribinos, mandá fotos o el comprobante. Acá también te avisamos cuando sale tu pedido.</p>
-        </div>
-        <Chat customerId={customer.id} role="cliente" title="Surf Coffee" subtitle="Te respondemos por acá"
-          empty="Escribinos o mandá tu pedido. Podés adjuntar fotos o el comprobante de pago." />
       </section>
 
       <AnimatePresence>

@@ -1,7 +1,7 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { MotionConfig } from 'motion/react';
-import { supabase } from '@/lib/supabase';
+import { missingConfig, supabase } from '@/lib/supabase';
 
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
@@ -49,11 +49,31 @@ export default function AppProvider({ children }) {
     }
   }, [toast]);
 
-  // sesión
+  // sesión: queda guardada en el dispositivo (ver app/api/session/route.js)
   useEffect(() => {
-    sb.auth.getSession().then(({ data }) => { setSession(data.session); setAuthReady(true); });
-    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    let alive = true;
+    let saved = '';
+    const call = (body) => fetch('/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
+    sb.auth.getSession().then(async ({ data }) => {
+      let s = data.session;
+      if (!s && !missingConfig) {
+        // el navegador perdió la sesión (por ejemplo, Safari después de 7 días): la recuperamos
+        try {
+          const r = await call({ action: 'restore' }).then((x) => x.json());
+          if (r?.session) { const { data: d } = await sb.auth.setSession(r.session); s = d?.session || null; }
+        } catch {}
+      }
+      if (alive) { setSession(s); setAuthReady(true); }
+    });
+    const { data: sub } = sb.auth.onAuthStateChange((e, s) => {
+      setSession(s);
+      if (s?.refresh_token && s.refresh_token !== saved && ['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(e)) {
+        saved = s.refresh_token;
+        call({ action: 'save', refresh_token: s.refresh_token }).catch(() => {});
+      }
+      if (e === 'SIGNED_OUT') { saved = ''; call({ action: 'clear' }).catch(() => {}); }
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
   }, [sb]);
 
   const uid = session?.user?.id;
