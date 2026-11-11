@@ -13,6 +13,7 @@ export default function AppProvider({ children }) {
   const [customer, setCustomer] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [gallery, setGallery] = useState([]);
   const [menu, setMenu] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [unreadClient, setUnreadClient] = useState(false);
@@ -28,14 +29,17 @@ export default function AppProvider({ children }) {
 
   // datos públicos
   const loadPublic = useCallback(async () => {
-    const [s, m, r] = await Promise.all([
+    const [s, m, r, g] = await Promise.all([
       sb.from('settings').select('*').eq('id', 1).maybeSingle(),
       sb.from('menu_items').select('*').order('sort'),
       sb.from('rewards').select('*').order('cost'),
+      // si todavía no se corrió supabase/2026-11-fotos-inicio.sql, la tabla no existe y el carrusel no se muestra
+      sb.from('gallery').select('*').eq('active', true).order('sort').order('created_at'),
     ]);
     if (s.data) setSettings(s.data);
     setMenu(m.data || []);
     setRewards(r.data || []);
+    setGallery(g.error ? [] : g.data || []);
   }, [sb]);
   useEffect(() => { loadPublic(); }, [loadPublic]);
 
@@ -114,9 +118,9 @@ export default function AppProvider({ children }) {
   const signOut = useCallback(async () => { await sb.auth.signOut(); setCustomer(null); setIsAdmin(false); }, [sb]);
 
   const value = useMemo(() => ({
-    sb, session, authReady, customer, setCustomer, isAdmin, settings, setSettings, menu, setMenu, rewards, setRewards,
+    sb, session, authReady, customer, setCustomer, isAdmin, settings, setSettings, menu, setMenu, rewards, setRewards, gallery,
     loadPublic, loadMe, signOut, cart, setCart, setQty, unreadClient, toast,
-  }), [sb, session, authReady, customer, isAdmin, settings, menu, rewards, loadPublic, loadMe, signOut, cart, setQty, unreadClient, toast]);
+  }), [sb, session, authReady, customer, isAdmin, settings, menu, rewards, gallery, loadPublic, loadMe, signOut, cart, setQty, unreadClient, toast]);
 
   return (
     <Ctx.Provider value={value}>

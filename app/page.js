@@ -6,11 +6,12 @@ import { useApp } from '@/components/AppProvider';
 import { money } from '@/lib/utils';
 import { BrandPattern, Isotipo, Waves, Wordmark } from '@/components/Brand';
 import { ProductCard, ProductSheet } from '@/components/Products';
+import Gallery from '@/components/Gallery';
 
 const rise = (d = 0) => ({ initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, delay: d, ease: [0.2, 0.8, 0.2, 1] } });
 
 export default function Inicio() {
-  const { settings: c, menu } = useApp();
+  const { settings: c, menu, gallery } = useApp();
   const [open, setOpen] = useState(null);
   const close = useCallback(() => setOpen(null), []);
   const about = (c?.about || '').split(/\n\s*\n/).filter(Boolean);
@@ -51,6 +52,18 @@ export default function Inicio() {
 
       <div className="wrap">
         <section className="sec intro">
+          <motion.figure className="us" initial={{ opacity: 0, y: 30, rotate: -6 }} whileInView={{ opacity: 1, y: 0, rotate: -2.5 }}
+            viewport={{ once: true, margin: '-80px' }} transition={{ type: 'spring', stiffness: 70, damping: 14 }}>
+            <picture>
+              {c?.about_image_url ? null : <source srcSet="/fotos/nosotros.webp" type="image/webp" />}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c?.about_image_url || '/fotos/nosotros.jpg'} alt={`${c?.about_title || 'Los dueños'} en la puerta de Surf Coffee`} loading="lazy" decoding="async" />
+            </picture>
+            <motion.span className="us-sticker" aria-hidden="true" initial={{ scale: 0, rotate: -40 }} whileInView={{ scale: 1, rotate: 12 }}
+              viewport={{ once: true }} transition={{ type: 'spring', stiffness: 260, damping: 12, delay: 0.45 }}>
+              <Isotipo alt="" />
+            </motion.span>
+          </motion.figure>
           <div className="about">
             <div className="eyebrow">Quiénes somos</div>
             <h2>{c?.about_title || 'Quiénes somos'}</h2>
@@ -85,6 +98,16 @@ export default function Inicio() {
             <div className="strip">
               {picks.map((i) => <ProductCard key={i.id} item={i} onOpen={setOpen} ctx="h" />)}
             </div>
+          </section>
+        ) : null}
+
+        {gallery.length ? (
+          <section className="sec reel-sec" aria-labelledby="reel-t">
+            <div className="sec-head">
+              <h2 id="reel-t">Pasa en Surf</h2>
+              {ig ? <a className="btn ghost sm" href={`https://instagram.com/${ig}`} target="_blank" rel="noopener noreferrer">Más en Instagram</a> : null}
+            </div>
+            <Gallery photos={gallery} />
           </section>
         ) : null}
 

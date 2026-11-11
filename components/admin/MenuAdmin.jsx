@@ -6,15 +6,7 @@ import { ProductArt } from '../Products';
 
 const blank = { name: '', category: '', price: '', sort: 100, description: '', available: true, image_url: null, _img0: null };
 
-// Achica la foto en el navegador (máx. 1400 px, WebP) para que la carta cargue rápido.
-async function shrink(file) {
-  const bmp = await createImageBitmap(file);
-  const k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
-  const c = document.createElement('canvas');
-  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
-  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-  return await new Promise((r) => c.toBlob(r, 'image/webp', 0.84));
-}
+import { shrinkPhoto as shrink, uploadPhoto } from '@/lib/photos';
 
 export default function MenuAdmin() {
   const { sb, menu, loadPublic, toast } = useApp();
@@ -31,7 +23,7 @@ export default function MenuAdmin() {
     e.target.value = '';
     if (!f) return;
     try {
-      const blob = await shrink(f);
+      const blob = await shrink(f, 1400);
       setPhoto({ blob, url: URL.createObjectURL(blob) });
     } catch { toast('No se pudo leer esa imagen. Probá con un JPG o PNG.'); }
   }
@@ -41,17 +33,15 @@ export default function MenuAdmin() {
     setBusy(true);
     let image_url = form.image_url || null;
     if (photo) {
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-      const up = await sb.storage.from('menu').upload(path, photo.blob, { contentType: 'image/webp', upsert: false });
-      if (up.error) { setBusy(false); return toast('No se pudo subir la foto. ¿Corriste supabase/2026-10-fotos-menu.sql?'); }
-      image_url = sb.storage.from('menu').getPublicUrl(path).data.publicUrl;
+      try { image_url = await uploadPhoto(sb, photo.blob, 'productos'); }
+      catch { setBusy(false); return toast('No se pudo subir la foto. ¿Corriste supabase/2026-11-fotos-inicio.sql?'); }
     }
     const data = { name: form.name.trim(), category: form.category.trim() || 'Otros', price: Number(form.price) || 0, sort: Number(form.sort) || 100, description: form.description.trim(), available: !!form.available };
     // image_url solo se manda si cambió la foto (así el menú se sigue pudiendo editar aunque falte la migración)
     if (photo || (form.image_url || null) !== (form._img0 || null)) data.image_url = image_url;
     const { error } = editId ? await sb.from('menu_items').update(data).eq('id', editId) : await sb.from('menu_items').insert(data);
     setBusy(false);
-    if (error) return toast(/image_url/.test(error.message || '') ? 'Falta correr supabase/2026-10-fotos-menu.sql para guardar fotos' : 'No se pudo guardar');
+    if (error) return toast(/image_url/.test(error.message || '') ? 'Falta correr supabase/2026-11-fotos-inicio.sql para guardar fotos' : 'No se pudo guardar');
     setForm(blank); setEditId(null); setPhoto(null); loadPublic(); toast('Menú actualizado');
   }
   async function toggle(i) { await sb.from('menu_items').update({ available: !i.available }).eq('id', i.id); loadPublic(); }
