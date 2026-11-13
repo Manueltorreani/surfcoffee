@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { MotionConfig } from 'motion/react';
+import { missingConfig, supabase } from '@/lib/supabase';
 
 const Ctx = createContext(null);
 export const useApp = () => useContext(Ctx);
@@ -12,6 +13,7 @@ export default function AppProvider({ children }) {
   const [customer, setCustomer] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [gallery, setGallery] = useState([]);
   const [menu, setMenu] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [unreadClient, setUnreadClient] = useState(false);
@@ -27,14 +29,17 @@ export default function AppProvider({ children }) {
 
   // datos públicos
   const loadPublic = useCallback(async () => {
-    const [s, m, r] = await Promise.all([
+    const [s, m, r, g] = await Promise.all([
       sb.from('settings').select('*').eq('id', 1).maybeSingle(),
       sb.from('menu_items').select('*').order('sort'),
       sb.from('rewards').select('*').order('cost'),
+      // si todavía no se corrió supabase/2026-11-fotos-inicio.sql, la tabla no existe y el carrusel no se muestra
+      sb.from('gallery').select('*').eq('active', true).order('sort').order('created_at'),
     ]);
     if (s.data) setSettings(s.data);
     setMenu(m.data || []);
     setRewards(r.data || []);
+    setGallery(g.error ? [] : g.data || []);
   }, [sb]);
   useEffect(() => { loadPublic(); }, [loadPublic]);
 
@@ -48,11 +53,31 @@ export default function AppProvider({ children }) {
     }
   }, [toast]);
 
-  // sesión
+  // sesión: queda guardada en el dispositivo (ver app/api/session/route.js)
   useEffect(() => {
-    sb.auth.getSession().then(({ data }) => { setSession(data.session); setAuthReady(true); });
-    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    let alive = true;
+    let saved = '';
+    const call = (body) => fetch('/api/session', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
+    sb.auth.getSession().then(async ({ data }) => {
+      let s = data.session;
+      if (!s && !missingConfig) {
+        // el navegador perdió la sesión (por ejemplo, Safari después de 7 días): la recuperamos
+        try {
+          const r = await call({ action: 'restore' }).then((x) => x.json());
+          if (r?.session) { const { data: d } = await sb.auth.setSession(r.session); s = d?.session || null; }
+        } catch {}
+      }
+      if (alive) { setSession(s); setAuthReady(true); }
+    });
+    const { data: sub } = sb.auth.onAuthStateChange((e, s) => {
+      setSession(s);
+      if (s?.refresh_token && s.refresh_token !== saved && ['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(e)) {
+        saved = s.refresh_token;
+        call({ action: 'save', refresh_token: s.refresh_token }).catch(() => {});
+      }
+      if (e === 'SIGNED_OUT') { saved = ''; call({ action: 'clear' }).catch(() => {}); }
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
   }, [sb]);
 
   const uid = session?.user?.id;
@@ -79,17 +104,31 @@ export default function AppProvider({ children }) {
     return () => { sb.removeChannel(ch); };
   }, [sb, cid]);
 
+  // pedido en armado: se guarda en este navegador para no perderlo al recargar
+  useEffect(() => {
+    try { const c = JSON.parse(localStorage.getItem('sc-cart') || '{}'); if (c && typeof c === 'object') setCart(c); } catch {}
+  }, []);
+  useEffect(() => { try { localStorage.setItem('sc-cart', JSON.stringify(cart)); } catch {} }, [cart]);
+  const setQty = useCallback((id, d) => setCart((c) => {
+    const n = (c[id] || 0) + d; const x = { ...c };
+    if (n <= 0) delete x[id]; else x[id] = Math.min(n, 30);
+    return x;
+  }), []);
+
   const signOut = useCallback(async () => { await sb.auth.signOut(); setCustomer(null); setIsAdmin(false); }, [sb]);
 
   const value = useMemo(() => ({
-    sb, session, authReady, customer, setCustomer, isAdmin, settings, setSettings, menu, setMenu, rewards, setRewards,
-    loadPublic, loadMe, signOut, cart, setCart, unreadClient, toast,
-  }), [sb, session, authReady, customer, isAdmin, settings, menu, rewards, loadPublic, loadMe, signOut, cart, unreadClient, toast]);
+    sb, session, authReady, customer, setCustomer, isAdmin, settings, setSettings, menu, setMenu, rewards, setRewards, gallery,
+    loadPublic, loadMe, signOut, cart, setCart, setQty, unreadClient, toast,
+  }), [sb, session, authReady, customer, isAdmin, settings, menu, rewards, gallery, loadPublic, loadMe, signOut, cart, setQty, unreadClient, toast]);
 
   return (
     <Ctx.Provider value={value}>
-      {children}
-      {toastMsg ? <div className="toast" role="status">{toastMsg}</div> : null}
+      <MotionConfig reducedMotion="user" transition={{ type: 'spring', stiffness: 420, damping: 38 }}>
+        {children}
+      </MotionConfig>
+      <div aria-live="polite" className="sr">{toastMsg}</div>
+      {toastMsg ? <div className="toast" key={toastMsg} aria-hidden="true">{toastMsg}</div> : null}
     </Ctx.Provider>
   );
 }

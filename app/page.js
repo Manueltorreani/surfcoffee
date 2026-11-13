@@ -1,76 +1,104 @@
 'use client';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import { useApp } from '@/components/AppProvider';
 import { money } from '@/lib/utils';
-import { BrandPattern, Isotipo, Wordmark } from '@/components/Brand';
+import { BrandPattern, Isotipo, Waves, Wordmark } from '@/components/Brand';
+import Gallery from '@/components/Gallery';
 
-function Wave() {
-  return (
-    <svg className="wave" viewBox="0 0 1200 56" preserveAspectRatio="none" aria-hidden="true">
-      <path fill="none" stroke="currentColor" strokeWidth="3" d="M-40 30 C 60 6, 140 6, 240 30 S 420 54, 520 30 S 700 6, 800 30 S 980 54, 1080 30 S 1260 6, 1360 30" />
-    </svg>
-  );
-}
+const rise = (d = 0) => ({ initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, delay: d, ease: [0.2, 0.8, 0.2, 1] } });
 
 export default function Inicio() {
-  const { settings: c } = useApp();
-  if (!c) return <div className="wrap"><section className="hero"><div className="empty">Cargando…</div></section></div>;
-  const about = (c.about || '').split(/\n\s*\n/).filter(Boolean);
-  const hours = (c.hours || '').split('\n').map((l) => l.split('|').map((x) => x.trim())).filter((r) => r[0]);
-  const mapUrl = c.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address.replace(/\(.*\)/, '') + ', Mar del Plata')}` : null;
-  const ppp = Math.max(1, c.pesos_por_punto || 100);
+  const { settings: c, gallery } = useApp();
+  const about = (c?.about || '').split(/\n\s*\n/).filter(Boolean);
+  const hours = (c?.hours || '').split('\n').map((l) => l.split('|').map((x) => x.trim())).filter((r) => r[0]);
+  const mapUrl = c?.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address.replace(/\(.*\)/, '') + ', Mar del Plata')}` : null;
+  const ppp = Math.max(1, c?.pesos_por_punto || 100);
+  const ig = (c?.instagram || '').replace(/^@/, '').trim();
 
   return (
-    <div className="wrap">
-      <section className="hero">
-        <div className="hero-grid">
-          <Isotipo className="hero-iso" alt="" />
-          <div className="hero-copy">
-            <div className="coords">38°00′S · 57°33′O · MAR DEL PLATA</div>
-            <h1><Wordmark className="hero-wm" title="Surf Coffee" /></h1>
-            <div className="kicker">Cafetería de especialidad</div>
-            <p className="tag">{c.tagline || 'Café de especialidad a pasos del mar.'}</p>
-            <div className="cta">
-              <Link className="btn" href="/menu">Ver el menú</Link>
-              <Link className="btn wax" href="/delivery">Pedir delivery</Link>
+    <>
+      <section className="surf">
+        <div className="spray" />
+        <div className="wrap surf-in">
+          <div className="surf-copy">
+            <motion.div className="kicker" {...rise(0.05)}>Cafetería de especialidad en Mar del Plata</motion.div>
+            <motion.h1 initial={{ opacity: 0, x: -40, skewX: -8 }} animate={{ opacity: 1, x: 0, skewX: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}>
+              <Wordmark className="surf-wm" title="Surf Coffee" />
+            </motion.h1>
+            <motion.p className="lead" {...rise(0.25)}>{c?.tagline || 'Café de especialidad, buena música y olor a mar.'}</motion.p>
+            <motion.div className="surf-cta" {...rise(0.38)}>
+              <Link className="btn white" href="/menu">Ver la carta</Link>
+              <Link className="btn outline-white" href="/delivery">Pedir delivery</Link>
+            </motion.div>
+          </div>
+          <motion.div className="rider" initial={{ opacity: 0, y: 80, rotate: -12 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ type: 'spring', stiffness: 90, damping: 12, delay: 0.35 }}>
+            <motion.div style={{ width: '100%', height: '100%' }} animate={{ y: [0, -10, 0], rotate: [-2, 3, -2] }} transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut', delay: 1.4 }}>
+              <Isotipo alt="" />
+            </motion.div>
+          </motion.div>
+        </div>
+        <Waves />
+      </section>
+
+      <div className="wrap">
+        <section className="sec intro">
+          <motion.figure className="us" initial={{ opacity: 0, y: 30, rotate: -6 }} whileInView={{ opacity: 1, y: 0, rotate: -2.5 }}
+            viewport={{ once: true, margin: '-80px' }} transition={{ type: 'spring', stiffness: 70, damping: 14 }}>
+            <picture>
+              {c?.about_image_url ? null : <source srcSet="/fotos/nosotros.webp" type="image/webp" />}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c?.about_image_url || '/fotos/nosotros.jpg'} alt={`${c?.about_title || 'Los dueños'} en la puerta de Surf Coffee`} loading="lazy" decoding="async" />
+            </picture>
+            <motion.span className="us-sticker" aria-hidden="true" initial={{ scale: 0, rotate: -40 }} whileInView={{ scale: 1, rotate: 12 }}
+              viewport={{ once: true }} transition={{ type: 'spring', stiffness: 260, damping: 12, delay: 0.45 }}>
+              <Isotipo alt="" />
+            </motion.span>
+          </motion.figure>
+          <div className="about">
+            <div className="eyebrow">Quiénes somos</div>
+            <h2>{c?.about_title || 'Quiénes somos'}</h2>
+            {about.length ? about.map((p, i) => <p key={i}>{p}</p>) : <p className="muted">Pronto vas a poder leer nuestra historia acá.</p>}
+          </div>
+          <div className="spot">
+            <div className="eyebrow">Dónde estamos</div>
+            {c?.address ? (
+              <div>
+                <div className="addr">{c.address}</div>
+                <div className="muted">Mar del Plata, Buenos Aires</div>
+              </div>
+            ) : <p className="muted">Dirección a confirmar.</p>}
+            {hours.length ? (
+              <div className="tide">
+                {hours.map((r, i) => <div key={i}><span>{r[0]}</span><span>{r[1] || ''}</span></div>)}
+              </div>
+            ) : null}
+            <div className="acts">
+              {mapUrl ? <a className="btn sm" href={mapUrl} target="_blank" rel="noopener noreferrer">Cómo llegar</a> : null}
+              {ig ? <a className="btn ghost sm" href={`https://instagram.com/${ig}`} target="_blank" rel="noopener noreferrer">Instagram</a> : null}
             </div>
           </div>
-        </div>
-        <Wave />
-      </section>
+        </section>
 
-      <section className="sec two">
-        <div className="about">
-          <div className="eyebrow">Quiénes somos</div>
-          <h2>{c.about_title || 'Quiénes somos'}</h2>
-          {about.length ? about.map((p, i) => <p key={i}>{p}</p>) : <p className="muted">Pronto vas a poder leer nuestra historia acá.</p>}
-        </div>
-        <div className="stack">
-          <div className="eyebrow">Dónde estamos</div>
-          {c.address ? (
-            <>
-              <div className="addr">{c.address}</div>
-              <div className="muted">Mar del Plata, Buenos Aires</div>
-              <div><a className="btn ghost sm" href={mapUrl} target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></div>
-            </>
-          ) : <p className="muted">Dirección a confirmar.</p>}
-          {hours.length ? (
-            <div className="tide" style={{ marginTop: 8 }}>
-              {hours.map((r, i) => <div key={i}><span>{r[0]}</span><span>{r[1] || ''}</span></div>)}
+        {gallery.length ? (
+          <section className="sec reel-sec" aria-labelledby="reel-t">
+            <div className="sec-head">
+              <h2 id="reel-t">Pasa en Surf</h2>
+              {ig ? <a className="btn ghost sm" href={`https://instagram.com/${ig}`} target="_blank" rel="noopener noreferrer">Más en Instagram</a> : null}
             </div>
-          ) : null}
-          {c.instagram ? <div className="muted">Instagram: <b>{c.instagram}</b></div> : null}
-        </div>
-      </section>
+            <Gallery photos={gallery} />
+          </section>
+        ) : null}
 
-      <section className="sec">
-        <div className="rule">
-          <BrandPattern />
-          <div className="big">+1</div>
-          <p><b>Sumá puntos en cada compra.</b> Por cada {money(ppp)} que gastás en el local te damos 1 punto. Juntalos y canjealos por café, pastelería y más. Solo decí tu nombre y apellido en caja.</p>
-          <Link className="btn wax" href="/puntos">Ver mis puntos</Link>
-        </div>
-      </section>
-    </div>
+        <section className="sec">
+          <div className="rule">
+            <BrandPattern />
+            <div className="big" aria-hidden="true">+1</div>
+            <p><b>Sumá puntos en cada compra.</b> Por cada {money(ppp)} que gastás en el local te damos 1 punto. Juntalos y canjealos por café, pastelería y más. Solo decí tu nombre y apellido en caja.</p>
+            <Link className="btn wax" href="/puntos">Ver mis puntos</Link>
+          </div>
+        </section>
+      </div>
+    </>
   );
 }
