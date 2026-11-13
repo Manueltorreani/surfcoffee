@@ -1,29 +1,20 @@
 'use client';
-import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { useApp } from '@/components/AppProvider';
 import { money } from '@/lib/utils';
 import { BrandPattern, Isotipo, Waves, Wordmark } from '@/components/Brand';
-import { ProductCard, ProductSheet } from '@/components/Products';
 import Gallery from '@/components/Gallery';
 
 const rise = (d = 0) => ({ initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, delay: d, ease: [0.2, 0.8, 0.2, 1] } });
 
 export default function Inicio() {
-  const { settings: c, menu, gallery } = useApp();
-  const [open, setOpen] = useState(null);
-  const close = useCallback(() => setOpen(null), []);
+  const { settings: c, gallery } = useApp();
   const about = (c?.about || '').split(/\n\s*\n/).filter(Boolean);
   const hours = (c?.hours || '').split('\n').map((l) => l.split('|').map((x) => x.trim())).filter((r) => r[0]);
   const mapUrl = c?.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address.replace(/\(.*\)/, '') + ', Mar del Plata')}` : null;
   const ppp = Math.max(1, c?.pesos_por_punto || 100);
   const ig = (c?.instagram || '').replace(/^@/, '').trim();
-  // destacados: lo primero disponible de cada categoría, hasta 6
-  const seen = new Set();
-  const picks = [...menu].filter((i) => i.available).sort((a, b) => (a.sort ?? 100) - (b.sort ?? 100))
-    .filter((i) => { const k = i.category || 'Otros'; if (seen.has(k)) return false; seen.add(k); return true; })
-    .concat(menu.filter((i) => i.available)).filter((v, i, a) => a.indexOf(v) === i).slice(0, 6);
 
   return (
     <>
@@ -89,18 +80,6 @@ export default function Inicio() {
           </div>
         </section>
 
-        {picks.length ? (
-          <section className="sec">
-            <div className="sec-head">
-              <h2>De la barra</h2>
-              <Link className="btn ghost sm" href="/menu">Ver toda la carta</Link>
-            </div>
-            <div className="strip">
-              {picks.map((i) => <ProductCard key={i.id} item={i} onOpen={setOpen} ctx="h" />)}
-            </div>
-          </section>
-        ) : null}
-
         {gallery.length ? (
           <section className="sec reel-sec" aria-labelledby="reel-t">
             <div className="sec-head">
@@ -120,7 +99,6 @@ export default function Inicio() {
           </div>
         </section>
       </div>
-      <ProductSheet item={open} onClose={close} ctx="h" />
     </>
   );
 }
