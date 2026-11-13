@@ -509,3 +509,11 @@ tr:last-child td{border-bottom:0}
 .gitem.off img{opacity:.4;filter:grayscale(1)}
 @media (max-width:560px){.gitem{grid-template-columns:84px minmax(0,1fr)}.gitem img{width:84px}}
 label.btn.disabled{opacity:.45;pointer-events:none}
+
+/* ---------- mismo "revelado" para todas las fotos de productos ----------
+   Luz cálida desde arriba a la izquierda, un poco más de contraste y color, y viñeta suave.
+   Se aplica solo a fotos (no a los dibujos) y no modifica los archivos originales. */
+.pc-media:has(>img)>img{filter:brightness(1.04) contrast(1.12) saturate(1.16) sepia(.1)}
+.pc-media:has(>img)::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(110% 80% at 22% 0%,rgba(255,200,140,.9),rgba(255,214,160,.25) 45%,transparent 70%);mix-blend-mode:soft-light}
+.pc-media:has(>img)::after{z-index:1;background:radial-gradient(130% 110% at 50% 45%,transparent 48%,rgba(10,18,22,.5))}
+.pc-media>.pc-add,.pc-media>.pc-q,.pc-media>.soldout{z-index:2}
