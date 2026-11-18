@@ -120,6 +120,9 @@ export default function AuthCard({ why = 'Tu cuenta', staff = false }) {
         {tabs}
         <h2>Creá tu cuenta</h2>
         <p className="muted" style={{ fontSize: 14 }}>
+          La cuenta es para sumar puntos si sos cliente del local y para pedir delivery en la zona. La carta la ves sin entrar.
+        </p>
+        <p className="muted" style={{ fontSize: 14 }}>
           Usá el mismo nombre y apellido que decís en caja, así se juntan los puntos de tus compras en el local.
           {settings?.welcome_points > 0 ? <> Si es tu primera vez, te regalamos <b>{num(settings.welcome_points)} puntos</b>.</> : null}
         </p>
@@ -162,7 +165,7 @@ export default function AuthCard({ why = 'Tu cuenta', staff = false }) {
       {staff ? null : tabs}
       <div className="eyebrow">{why}</div>
       <h2>Iniciá sesión</h2>
-      {staff ? null : <p className="muted" style={{ fontSize: 14, marginTop: -4 }}>Entrás una sola vez y queda guardado en este celular.</p>}
+      {staff ? null : <p className="muted" style={{ fontSize: 14, marginTop: -4 }}>Solo hace falta para ver tus puntos o pedir delivery en la zona. Entrás una sola vez y queda guardado en este celular.</p>}
       {staff ? null : or}
       <form className="stack" onSubmit={onLogin}>
         <label className="f">Email o celular<input type="text" name="id" required autoComplete="username" placeholder="tu@email.com o 223 555 1234" /></label>
