@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from './AppProvider';
 import { emailOk, fullOk, normEmail, normPhone, num, properName, pwErr } from '@/lib/utils';
 
@@ -22,6 +22,32 @@ export default function AuthCard({ why = 'Tu cuenta', staff = false }) {
   const [mode, setMode] = useState('login');
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState('');
+  const pending = useRef(null); // { email, password } mientras espera que confirme el mail
+
+  // Después de crear la cuenta: apenas confirma el mail (aunque lo abra en otra app),
+  // este celular entra solo y la sesión queda guardada. Prueba al volver a la pestaña y cada 20 s.
+  useEffect(() => {
+    if (!sent || sent === 'forgot' || !pending.current) return;
+    let alive = true, tries = 0;
+    const tryIn = async () => {
+      if (!alive || !pending.current || document.visibilityState === 'hidden') return;
+      const { email, password } = pending.current;
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (!alive) return;
+      if (!error && data?.session) {
+        pending.current = null;
+        await loadMe();
+        toast('¡Listo! Tu cuenta quedó activada en este celular');
+        return;
+      }
+      if (++tries > 40) pending.current = null; // deja de intentar a los ~15 minutos
+    };
+    const t = setInterval(tryIn, 20000);
+    const onBack = () => { if (document.visibilityState === 'visible') tryIn(); };
+    document.addEventListener('visibilitychange', onBack);
+    window.addEventListener('focus', onBack);
+    return () => { alive = false; clearInterval(t); document.removeEventListener('visibilitychange', onBack); window.removeEventListener('focus', onBack); };
+  }, [sent, sb, loadMe, toast]);
 
   async function onLogin(e) {
     e.preventDefault();
@@ -61,7 +87,7 @@ export default function AuthCard({ why = 'Tu cuenta', staff = false }) {
       else toast('No se pudo crear la cuenta: ' + m);
       return;
     }
-    if (!data.session) { setSent(email); return; }
+    if (!data.session) { pending.current = { email, password: f.get('pw1') }; setSent(email); return; }
     await loadMe();
     toast(chk.existing ? '¡Listo! Sumamos los puntos de tus compras en el local' : '¡Cuenta creada!');
   }
@@ -107,9 +133,10 @@ export default function AuthCard({ why = 'Tu cuenta', staff = false }) {
         <p className="muted">
           {sent === 'forgot'
             ? 'Si hay una cuenta con ese email o celular, te llegó un mail con un link para elegir una contraseña nueva. Revisá también la carpeta de spam.'
-            : <>Te mandamos un mail a <b>{sent}</b>. Tocá el link del mail para activar tu cuenta y después iniciá sesión.</>}
+            : <>Te mandamos un mail a <b>{sent}</b>. Tocá el link del mail para activar tu cuenta. Cuando vuelvas a esta pantalla vas a entrar solo y queda guardado en este celular.</>}
         </p>
-        <button className="btn ghost" onClick={() => { setSent(''); setMode('login'); }}>Volver a iniciar sesión</button>
+        {sent !== 'forgot' ? <p className="muted" style={{ fontSize: 14 }}>¿No te llegó? Revisá la carpeta de spam o promociones.</p> : null}
+        <button className="btn ghost" onClick={() => { pending.current = null; setSent(''); setMode('login'); }}>Volver a iniciar sesión</button>
       </div>
     );
   }
