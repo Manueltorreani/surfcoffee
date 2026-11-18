@@ -509,3 +509,6 @@ tr:last-child td{border-bottom:0}
 .gitem.off img{opacity:.4;filter:grayscale(1)}
 @media (max-width:560px){.gitem{grid-template-columns:84px minmax(0,1fr)}.gitem img{width:84px}}
 label.btn.disabled{opacity:.45;pointer-events:none}
+.pts-out{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:clamp(20px,4vw,40px);align-items:start}
+.pts-out .rw:first-child{border-top:0}
+@media (max-width:860px){.pts-out{grid-template-columns:1fr}}

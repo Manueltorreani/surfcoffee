@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { anonClient, json } from '@/lib/server';
+import { anonClient, json, sameOrigin } from '@/lib/server';
 
 // Mantiene la sesión del cliente guardada en el dispositivo.
 // El navegador guarda la sesión en localStorage, pero Safari en iPhone la borra si
@@ -11,6 +11,7 @@ const NAME = 'sc_rt';
 const opts = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/api/session', maxAge: 60 * 60 * 24 * 400 };
 
 export async function POST(req) {
+  if (!sameOrigin(req)) return json({ error: 'No autorizado' }, 403);
   const body = await req.json().catch(() => ({}));
   const jar = cookies();
 

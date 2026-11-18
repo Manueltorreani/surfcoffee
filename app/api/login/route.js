@@ -1,8 +1,9 @@
-import { anonClient, emailFor, json } from '@/lib/server';
+import { anonClient, emailFor, json, sameOrigin } from '@/lib/server';
 
 // Inicia sesión con email o celular + contraseña.
 // El celular se traduce a email en el servidor, así no se expone el email de nadie.
 export async function POST(req) {
+  if (!sameOrigin(req)) return json({ error: 'No autorizado' }, 403);
   const { identifier, password } = await req.json().catch(() => ({}));
   if (!identifier || !password) return json({ error: 'Completá email o celular y contraseña' }, 400);
   const email = await emailFor(identifier);

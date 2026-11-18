@@ -1,8 +1,9 @@
-import { adminClient, json, normPhone } from '@/lib/server';
+import { adminClient, json, normPhone, sameOrigin } from '@/lib/server';
 import { nameKey } from '@/lib/utils';
 
 // Antes de crear la cuenta: avisa si el nombre, email o celular ya tienen cuenta web.
 export async function POST(req) {
+  if (!sameOrigin(req)) return json({ error: 'No autorizado' }, 403);
   const { name, email, phone } = await req.json().catch(() => ({}));
   const sb = adminClient();
   const k = nameKey(name);

@@ -1,7 +1,8 @@
-import { anonClient, emailFor, json } from '@/lib/server';
+import { anonClient, emailFor, json, sameOrigin } from '@/lib/server';
 
 // Manda el mail de "elegir contraseña nueva". Siempre responde ok para no revelar qué cuentas existen.
 export async function POST(req) {
+  if (!sameOrigin(req)) return json({ error: 'No autorizado' }, 403);
   const { identifier } = await req.json().catch(() => ({}));
   const email = await emailFor(identifier);
   if (email) {

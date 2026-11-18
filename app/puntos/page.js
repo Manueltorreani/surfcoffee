@@ -41,7 +41,31 @@ export default function Puntos() {
   if (!session || !customer) {
     return (
       <div className="wrap"><section className="sec" style={{ borderTop: 0 }}>
-        {session && !customer ? <div className="banner">Esta cuenta no tiene ficha de cliente (por ejemplo, una cuenta de administrador).</div> : <AuthCard why="Mis puntos" />}
+        {session && !customer ? <div className="banner">Esta cuenta no tiene ficha de cliente (por ejemplo, una cuenta de administrador).</div> : (
+          <div className="pts-out">
+            <div className="stack" style={{ gap: 16 }}>
+              <header className="page-head" style={{ paddingTop: 0 }}>
+                <h1>Mis puntos</h1>
+                <p className="lead muted">
+                  Por cada {money(Math.max(1, settings?.pesos_por_punto || 100))} que gastás en el local sumás 1 punto.
+                  Decí tu nombre y apellido en caja y canjealos por estos premios.
+                  {settings?.welcome_points ? ` Al crear tu cuenta te regalamos ${settings.welcome_points} puntos.` : ''}
+                </p>
+              </header>
+              {rewards.filter((r) => r.active).length ? (
+                <div className="card" style={{ paddingBlock: 6 }}>
+                  {rewards.filter((r) => r.active).sort((a, b) => a.cost - b.cost).map((r) => (
+                    <div className="rw" key={r.id} style={{ gridTemplateColumns: 'auto 1fr' }}>
+                      <span className="cost">{num(r.cost)} pts</span>
+                      <span><b>{r.name}</b>{r.description ? <span className="muted" style={{ display: 'block', fontSize: 14 }}>{r.description}</span> : null}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <AuthCard why="Para ver tus puntos" />
+          </div>
+        )}
       </section></div>
     );
   }
